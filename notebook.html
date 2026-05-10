@@ -205,20 +205,6 @@
             transition: opacity 0.5s;
         }
 
-        .mute-toggle {
-            position: fixed;
-            top: 16px;
-            right: 16px;
-            z-index: 100;
-            border: 1px solid rgba(244, 232, 211, 0.4);
-            background: rgba(20, 20, 20, 0.8);
-            color: #f4e8d3;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-family: sans-serif;
-            cursor: pointer;
-        }
-
         .local-player-panel {
             position: fixed;
             top: 16px;
@@ -241,17 +227,7 @@
 
         .local-player-meta {
             display: flex;
-            gap: 10px;
             margin-bottom: 10px;
-        }
-
-        .local-cover {
-            width: 68px;
-            height: 68px;
-            border-radius: 8px;
-            object-fit: cover;
-            border: 1px solid rgba(244, 232, 211, 0.25);
-            background: rgba(244, 232, 211, 0.1);
         }
 
         .local-track-details {
@@ -420,28 +396,25 @@
     </div>
 
     <div id="local-player-panel" class="local-player-panel" aria-label="Local music player">
-        <div class="local-player-title">Music Player</div>
+        <div class="local-player-title">Müzik oynatıcı</div>
         <div class="local-player-meta">
-            <img id="local-cover" class="local-cover" alt="Track cover art">
             <div class="local-track-details">
                 <div id="local-track-name" class="local-track-name">No track loaded</div>
                 <div id="local-track-artist" class="local-track-artist">Unknown artist</div>
             </div>
         </div>
         <div class="local-player-controls">
-            <button id="local-prev" type="button">Prev</button>
-            <button id="local-play-pause" type="button">Play</button>
-            <button id="local-next" type="button">Next</button>
-            <button id="local-shuffle" type="button">Shuffle Off</button>
+            <button id="local-prev" type="button">Geri</button>
+            <button id="local-play-pause" type="button">Oynat</button>
+            <button id="local-next" type="button">İleri</button>
         </div>
         <label class="local-player-volume" for="local-volume">
-            <span>Volume</span>
+            <span>Ses</span>
             <input id="local-volume" type="range" min="0" max="1" step="0.01" value="0.7">
         </label>
         <audio id="local-player-audio" preload="metadata"></audio>
     </div>
 
-    <button id="mute-toggle" class="mute-toggle" type="button" aria-pressed="false">Sound: On</button>
     <div id="interaction-hint">Click & Drag left/right to turn pages</div>
     <div id="term-tooltip" class="term-tooltip" role="dialog" aria-hidden="true" aria-live="polite">
         <button id="term-tooltip-close" class="term-tooltip-close" type="button" aria-label="Close term information">X</button>
@@ -455,16 +428,13 @@
         const book = document.getElementById('book');
         const pagesWrapper = document.getElementById('pages-wrapper');
         const hint = document.getElementById('interaction-hint');
-        const muteToggleButton = document.getElementById('mute-toggle');
         const localPlayerAudio = document.getElementById('local-player-audio');
         const localTrackName = document.getElementById('local-track-name');
         const localTrackArtist = document.getElementById('local-track-artist');
-        const localCover = document.getElementById('local-cover');
         const localVolume = document.getElementById('local-volume');
         const localPrevButton = document.getElementById('local-prev');
         const localPlayPauseButton = document.getElementById('local-play-pause');
         const localNextButton = document.getElementById('local-next');
-        const localShuffleButton = document.getElementById('local-shuffle');
         const catGif = document.getElementById('cat-gif');
         const tooltip = document.getElementById('term-tooltip');
         const tooltipTitle = document.getElementById('term-tooltip-title');
@@ -478,16 +448,14 @@
         flipAudio.preload = 'auto';
         let activeTermTrigger = null;
         let localTrackIndex = 0;
-        let isLocalShuffleEnabled = false;
-        let activeCoverUrl = null;
 
         const mediaConfig = {
             localTracks: [
-                { src: 'music1.mp3', fallbackTitle: 'Track 1', fallbackArtist: 'Unknown Artist' },
-                { src: 'music2.mp3', fallbackTitle: 'Track 2', fallbackArtist: 'Unknown Artist' },
-                { src: 'music3.mp3', fallbackTitle: 'Track 3', fallbackArtist: 'Unknown Artist' },
-                { src: 'music4.mp3', fallbackTitle: 'Track 4', fallbackArtist: 'Unknown Artist' },
-                { src: 'music5.mp3', fallbackTitle: 'Track 5', fallbackArtist: 'Unknown Artist' }
+                { src: 'music1.mp3', fallbackTitle: "Trisha's Lullaby", fallbackArtist: 'Warsaw Philharmonic Orchestra & Choir' },
+                { src: 'music2.mp3', fallbackTitle: 'Lily - ENDER LILIES', fallbackArtist: 'Binary Haze Interactive' },
+                { src: 'music3.mp3', fallbackTitle: 'Hungarian Dance No. 5', fallbackArtist: 'Johannes Brahms and Isaac Stern' },
+                { src: 'music4.mp3', fallbackTitle: 'Il mare eterno nella mia anima', fallbackArtist: 'Taku Iwasaki' },
+                { src: 'music5.mp3', fallbackTitle: 'Merry-Go-Round of Life', fallbackArtist: 'Joe Hisaishi' }
             ],
             catGif: {
                 showCat: true,
@@ -548,6 +516,29 @@
             }).join("")}</div>`;
         }
 
+        function inferTrackInfoFromSrc(src) {
+            const filename = src.split('/').pop().split('\\').pop() || src;
+            const basename = filename.replace(/\.[^/.]+$/, '');
+            const cleaned = basename.replace(/[_]+/g, ' ').trim();
+            const separators = [' - ', ' — ', ' – '];
+
+            for (const separator of separators) {
+                if (cleaned.includes(separator)) {
+                    const [artist, ...titleParts] = cleaned.split(separator);
+                    const title = titleParts.join(separator).trim();
+                    return {
+                        inferredTitle: title || cleaned,
+                        inferredArtist: artist.trim() || 'Unknown artist'
+                    };
+                }
+            }
+
+            return {
+                inferredTitle: cleaned || src,
+                inferredArtist: 'Local file'
+            };
+        }
+
         function initLocalPlayer() {
             const tracks = mediaConfig.localTracks;
             if (!tracks || tracks.length === 0) {
@@ -557,19 +548,15 @@
             }
 
             localPlayerAudio.volume = Number(localVolume.value);
-            localCover.src = '';
 
             function updateTrackMetadata(track) {
-                if (activeCoverUrl) {
-                    URL.revokeObjectURL(activeCoverUrl);
-                    activeCoverUrl = null;
-                }
-
-                const fallbackTitle = track.fallbackTitle || track.src;
-                const fallbackArtist = track.fallbackArtist || 'Unknown artist';
+                const inferredInfo = inferTrackInfoFromSrc(track.src);
+                const hasCustomTitle = track.fallbackTitle && !/^track\s*\d+$/i.test(track.fallbackTitle.trim());
+                const hasCustomArtist = track.fallbackArtist && !/^unknown\s*artist$/i.test(track.fallbackArtist.trim());
+                const fallbackTitle = hasCustomTitle ? track.fallbackTitle : inferredInfo.inferredTitle;
+                const fallbackArtist = hasCustomArtist ? track.fallbackArtist : inferredInfo.inferredArtist;
                 localTrackName.textContent = fallbackTitle;
                 localTrackArtist.textContent = fallbackArtist;
-                localCover.removeAttribute('src');
 
                 if (!window.jsmediatags) return;
 
@@ -577,20 +564,10 @@
                     onSuccess: ({ tags }) => {
                         localTrackName.textContent = tags.title || fallbackTitle;
                         localTrackArtist.textContent = tags.artist || fallbackArtist;
-
-                        if (tags.picture && tags.picture.data && tags.picture.format) {
-                            const byteArray = new Uint8Array(tags.picture.data);
-                            const blob = new Blob([byteArray], { type: tags.picture.format });
-                            activeCoverUrl = URL.createObjectURL(blob);
-                            localCover.src = activeCoverUrl;
-                        } else {
-                            localCover.removeAttribute('src');
-                        }
                     },
                     onError: () => {
                         localTrackName.textContent = fallbackTitle;
                         localTrackArtist.textContent = fallbackArtist;
-                        localCover.removeAttribute('src');
                     }
                 });
             }
@@ -603,19 +580,14 @@
                 updateTrackMetadata(track);
                 if (autoplay) {
                     localPlayerAudio.play().then(() => {
-                        localPlayPauseButton.textContent = 'Pause';
+                        localPlayPauseButton.textContent = 'Duraklat';
                     }).catch(() => {});
                 } else {
-                    localPlayPauseButton.textContent = 'Play';
+                    localPlayPauseButton.textContent = 'Oynat';
                 }
             }
 
             function nextTrack(autoplay = true) {
-                if (isLocalShuffleEnabled) {
-                    const randomIndex = Math.floor(Math.random() * tracks.length);
-                    loadTrack(randomIndex, autoplay);
-                    return;
-                }
                 loadTrack(localTrackIndex + 1, autoplay);
             }
 
@@ -629,17 +601,12 @@
             localPlayPauseButton.addEventListener('click', () => {
                 if (localPlayerAudio.paused) {
                     localPlayerAudio.play().then(() => {
-                        localPlayPauseButton.textContent = 'Pause';
+                        localPlayPauseButton.textContent = 'Duraklat';
                     }).catch(() => {});
                 } else {
                     localPlayerAudio.pause();
-                    localPlayPauseButton.textContent = 'Play';
+                    localPlayPauseButton.textContent = 'Oynat';
                 }
-            });
-
-            localShuffleButton.addEventListener('click', () => {
-                isLocalShuffleEnabled = !isLocalShuffleEnabled;
-                localShuffleButton.textContent = isLocalShuffleEnabled ? 'Shuffle On' : 'Shuffle Off';
             });
 
             localVolume.addEventListener('input', () => {
@@ -647,8 +614,8 @@
             });
 
             localPlayerAudio.addEventListener('ended', () => nextTrack(true));
-            localPlayerAudio.addEventListener('play', () => { localPlayPauseButton.textContent = 'Pause'; });
-            localPlayerAudio.addEventListener('pause', () => { localPlayPauseButton.textContent = 'Play'; });
+            localPlayerAudio.addEventListener('play', () => { localPlayPauseButton.textContent = 'Duraklat'; });
+            localPlayerAudio.addEventListener('pause', () => { localPlayPauseButton.textContent = 'Oynat'; });
 
             loadTrack(0, false);
         }
@@ -982,12 +949,6 @@
             if (activeTermTrigger && tooltip.classList.contains('visible')) {
                 positionTooltip(activeTermTrigger);
             }
-        });
-
-        muteToggleButton.addEventListener('click', () => {
-            isAudioEnabled = !isAudioEnabled;
-            muteToggleButton.textContent = isAudioEnabled ? 'Sound: On' : 'Sound: Off';
-            muteToggleButton.setAttribute('aria-pressed', isAudioEnabled ? 'false' : 'true');
         });
 
     </script>
