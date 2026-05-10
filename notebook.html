@@ -162,7 +162,8 @@
             color: #2c1e16; /* Faded ink color */
             font-size: 1.1rem;
             line-height: 1.6;
-            overflow: hidden; /* Prevent text spilling out */
+            min-height: 0; 
+            overflow: hidden; /* Disabled scrolling entirely */
         }
 
         .content-area h2 {
@@ -172,6 +173,87 @@
             border-bottom: 1px solid rgba(44, 30, 22, 0.2);
             padding-bottom: 0.5rem;
             text-align: center;
+        }
+
+        .chapter-emphasis {
+            display: inline-block;
+            font-size: 1.18em;
+            font-weight: 600;
+        }
+
+        .chapter-inline-image-wrap {
+            position: relative;
+            display: block;
+            width: fit-content;
+            max-width: 100%;
+            margin: 20px auto 6px;
+            padding: 6px 8px 10px;
+            transform: rotate(-2.2deg);
+            transform-origin: center center;
+            border-radius: 6px;
+            box-shadow:
+                0 14px 22px rgba(0, 0, 0, 0.28),
+                0 3px 8px rgba(44, 30, 22, 0.18);
+        }
+
+        .chapter-inline-image-wrap::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: 0.32;
+            mix-blend-mode: multiply;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.55'/%3E%3C/svg%3E");
+            z-index: 2;
+        }
+
+        .chapter-inline-image-wrap::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 248, 235, 0.35),
+                inset 0 -2px 6px rgba(70, 42, 24, 0.12);
+            z-index: 1;
+        }
+
+        .chapter-inline-image-pin {
+            position: absolute;
+            top: -7px;
+            left: 50%;
+            z-index: 4;
+            width: 13px;
+            height: 13px;
+            margin-left: -6px;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle at 32% 28%, rgba(255, 250, 235, 0.95), rgba(200, 175, 130, 0.35) 42%, transparent 55%),
+                radial-gradient(circle at 50% 50%, #8b7355, #4a3828 62%, #2a1e18);
+            box-shadow:
+                0 3px 5px rgba(0, 0, 0, 0.45),
+                0 0 0 1px rgba(40, 28, 20, 0.35) inset,
+                0 10px 12px rgba(0, 0, 0, 0.22);
+            transform: rotate(4deg);
+        }
+
+        .chapter-inline-image {
+            position: relative;
+            display: block;
+            max-width: 90%;
+            max-height: 200px;
+            margin: 0;
+            border-radius: 4px;
+            object-fit: contain;
+            filter: sepia(0.28) contrast(0.94) brightness(0.97) saturate(0.82);
+            border: 1px solid rgba(70, 42, 24, 0.32);
+            box-shadow:
+                0 2px 0 rgba(255, 244, 224, 0.2) inset,
+                0 -1px 0 rgba(70, 42, 24, 0.1) inset;
+            opacity: 0.97;
+            z-index: 0;
         }
 
         .page-number {
@@ -390,8 +472,6 @@
     <div class="book-container" id="book">
         <div class="spine"></div>
         
-        <!-- We will generate pages via JS to keep HTML clean, 
-             but we define the structure here for clarity -->
         <div id="pages-wrapper"></div>
     </div>
 
@@ -467,7 +547,7 @@
         const loremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.";
 
         const termDetails = {
-            ashCodex: { title: "Ash Codex", description: "Placeholder lore entry. Add final codex history and related factions later." },
+            ashCodex: { title: "Haruspex", description: "Haruspex, antik Roma ve öncesinde kurban edilen hayvanların iç organlarını inceleyerek tanrıların iradesini yorumlayan kişilere denirdi." },
             emberCourt: { title: "Ember Court", description: "Placeholder lore entry. Define this court's role, alliances, and conflicts." },
             voidSigil: { title: "Void Sigil", description: "Placeholder lore entry. Add the sigil origin and practical effects." },
             nightWardens: { title: "Night Wardens", description: "Placeholder lore entry. Describe purpose, hierarchy, and legacy." },
@@ -475,15 +555,66 @@
             redConclave: { title: "Red Conclave", description: "Placeholder lore entry. Insert political and arcane context." }
         };
 
-        const termRotation = Object.keys(termDetails);
+        const termTemplates = [
+            { title: "Ember Court", description: "Placeholder lore entry. Define this court's role, alliances, and conflicts." },
+            { title: "Void Sigil", description: "Placeholder lore entry. Add the sigil origin and practical effects." },
+            { title: "Night Wardens", description: "Placeholder lore entry. Describe purpose, hierarchy, and legacy." },
+            { title: "Black Harbor", description: "Placeholder lore entry. Add location details and notable events." },
+            { title: "Red Conclave", description: "Placeholder lore entry. Insert political and arcane context." },
+            { title: "Ash Archive", description: "Placeholder lore entry. Add archive keepers and forbidden index details." }
+        ];
+        const chapterLeadFragments = [
+            "Kasaba sokakları gece boyunca sisle örtülürken",
+            "Megapolis arşivlerinin paslı rafları arasında",
+            "Kuzey kapısındaki nöbet değişimi sürerken",
+            "Katedral çanları uzak tepelerde yankılanırken",
+            "Eski limanın taş rıhtımlarında ayak sesleri yükselirken",
+            "Yeraltı geçitlerinden metal kokusu yayılırken",
+            "Şafak henüz görünmeden önce şehir uyanırken"
+        ];
+
         const chapterItems = Array.from({ length: 21 }, (_, index) => {
             const pageNumber = index + 1;
+            const lead = chapterLeadFragments[index % chapterLeadFragments.length];
+            const secondLead = chapterLeadFragments[(index + 3) % chapterLeadFragments.length];
+            const primaryTemplate = termTemplates[index % termTemplates.length];
+            const secondaryTemplate = termTemplates[(index + 2) % termTemplates.length];
+            const primaryTermId = `chapter-${pageNumber}-term-1`;
+            const secondaryTermId = `chapter-${pageNumber}-term-2`;
+
+            if (pageNumber === 1) {
+                termDetails[primaryTermId] = {
+                    title: "Haruspex",
+                    description: "Haruspex, antik Roma ve öncesinde kurban edilen hayvanların iç organlarını inceleyerek tanrıların iradesini yorumlayan kişilere denirdi."
+                };
+            } else {
+                termDetails[primaryTermId] = {
+                    title: `${primaryTemplate.title} ${pageNumber}`,
+                    description: `${primaryTemplate.description} (Chapter ${pageNumber})`
+                };
+            }
+
+            termDetails[secondaryTermId] = {
+                title: `${secondaryTemplate.title} ${pageNumber}`,
+                description: `${secondaryTemplate.description} (Chapter ${pageNumber})`
+            };
+
+            const highlightTerms = (pageNumber === 1 || pageNumber === 2 || pageNumber === 3 || pageNumber === 4)
+                ? []
+                : pageNumber === 1
+                    ? [primaryTermId]
+                    : [
+                        primaryTermId,
+                        secondaryTermId
+                    ];
+
             return {
                 pageNumber,
                 chapterTitle: `Chapter ${pageNumber}`,
-                highlightTerms: [
-                    termRotation[index % termRotation.length],
-                    termRotation[(index + 2) % termRotation.length]
+                highlightTerms,
+                bodyParagraphs: [
+                    `${lead}, Vaelen Haruspex olayların görünmeyen tarafını takip eder ve sayfa ${pageNumber} boyunca yeni ipuçları toplar.`,
+                    `${secondLead}, dosyalar ve tanıklıklar birbiriyle çelişse de Vaelen adım adım gerçeğe yaklaşır.`
                 ]
             };
         });
@@ -500,6 +631,49 @@
             chapters: chapterItems
         };
 
+        const chapterTitleOverrides = {
+            4: "Yolculuk"
+        };
+
+        const chapterOverrides = {
+            4: [
+                "=25 Ekim 1854=",
+                "Gün yeni aydınlanıyordu. Babamın ölümü üzerinde Kasaba'ya yola çıkmaya karar vermiştim, trende bir adamla karşılaştım kendisi Kasaba'nın yerellerinden biriymiş. Kendisine çok soru sormadım ama onun bana sorduğu yüzlerce soru vardı ancak sorulara cevap olarak sadece adımı söylemem yetti… Kasaba'da bu kadar bilindiğimi düşünmüyordum, adam bana babamın yaptığı mucizelerden bahsetti. Babam 1800'lerde [[chapter-4-term-1|Sarıhumma]] adında bir enfeksiyonun tedavisini bulmuş ve Kasaba'nın ismini şenlendirmiş. Yıllar boyunca [[chapter-4-term-2|Krush™]] ile beraber çalışmış… Babamın bu huyunu asla sevmiyordum, büyük şirketler sadece parayı umursarlar ve kendisi hayatı boyunca şirketlerle çalışmıştı. Eğer bu kadar önemli biri olmasaydı şirket onun da diğer herkes gibi hayatını mahvederdi. Neyse… Kasaba'ya ulaşmak üzereyim, bugün not edilecek pek bir şeyim yok. Sadece düşüncelerim ve anılarım."
+            ],
+            1: [
+                "Vaelen [[chapter-1-term-1|Haruspex]], evine girmeden önce vakum email kutusunu kontrol eder. İçinde bir posta bulur.",
+                "=23 Ekim 1854=",
+                "from: Krush Clinic Sağlık Başkanı",
+                "to: Vaelen [[chapter-1-term-1|Haruspex]], Megapolis Posta sistemi",
+                "Subject: No subject written",
+                "Sayın Vaelen [[chapter-1-term-1|Haruspex]],",
+                "Babanızın ani vefatını size bildirmek gibi ağır bir görevi yerine getirmek amacıyla bu e-postayı yazıyoruz. Krush Clinic yönetim kurulu olarak, lütfen resmi başsağlığımızı kabul ediniz. Kendisinin titiz çalışmaları ve kurumumuza olan bağlılığı, meslektaşları tarafından her zaman büyük saygı ile görülmüştür.",
+                "Cenaze işlemleri için gerekli düzenlemeler yapılmıştır. Tören, bu hafta içinde Kasaba'da gerçekleştirilecektir. En yakın akrabası ve tek çocuğu olarak, defin işlemlerine nezaret etmeniz ve törene katılmanız beklenmektedir."
+            ],
+            2: [
+                "Bunun sizin için büyük bir kayıp ve zor bir süreç olduğunun farkında olmakla birlikte, ne yazık ki toplumumuzun tıbbi ihtiyaçları ertelenemez durumdadır. Babanızın ani ayrılışı, kadromuzda kritik bir boşluk yaratmıştır. Patoloji Doktoru pozisyonu, Krush Clinic'in kesintisiz işleyişi için hayati bir önem taşımaktadır.",
+                "Özgeçmişiniz ve babanızın devam eden araştırmaları ile vaka dosyalarına olan ailevi bağınız göz önüne alınarak, yönetim kurulumuz görev devrinin derhal gerçekleştirilmesine onay vermiştir. Yas sürecinin hemen ardından geçerli olmak üzere, babanızın görevlerini devralmanızı ve Baş Patoloji Doktorumuz olarak göreve başlamanızı resmi olarak talep ediyoruz.",
+                "Kasaba'ya dönüşünüz için gerekli seyahat planlamalarını gecikmeksizin yapmanızı rica ediyoruz. Cenaze töreni başlamadan önce görev devri ile ilgili evrak işlemlerini tamamlayabilmemiz için, varışınızın hemen ardından doğrudan ofisime gelmeniz gerekmektedir."
+            ],
+            3: [
+                "Vaelen geriye kalan sayfaları daha görmeden anlamıştır. Onlarca sayfa dolusu cenaze töreninin ve diğer harcamaların faturası, bahsedilen cenaze işlemlerinin ödemesinin hepsi Vaelen’e bırakılmıştır ancak bu dünyada işler böyle yürütüldüğünden dolayı da hiç şaşırmamıştır. Vaelen Kasaba’dan ne kadar nefret etse de babasının uğruna gitmeye karar verir. Ancak Vaelen’in, babasının yerini doldurma gibi bir hedefi yoktur sadece cenaze için ve babasının onurlu çocuğu olmaya devam etmek için tren yoluyla Kasaba’ya yol almaya karar verir."
+            ]
+        };
+
+        const chapterOverrideImages = {
+            3: 'ticket.png'
+        };
+
+        // Override term details for page 4
+        termDetails['chapter-4-term-1'] = {
+            title: "Sarıhumma",
+            description: "Sarıhumma, enfekte Aedes türü sivrisineklerin ısırmasıyla bulaşan, akut viral kanamalı bir hastalıktır. Ateş, baş ağrısı, bulantı, sarılık ile ciddi vakalarda kanama ve organ yetmezliğine neden olabilir."
+        };
+        termDetails['chapter-4-term-2'] = {
+            title: "Krush",
+            description: "Krush, dünyanın ilk megakorposudur, aynı zamanda dünyada seçilen ilk şirket cumhurbaşkanıdır. Bankalar, hastaneler, havada solunan oksijen bile şirketin kontrolü altındadır."
+        };
+
         function getChapterByPage(pageNumber) {
             return bookContent.chapters.find((chapter) => chapter.pageNumber === pageNumber) || {
                 chapterTitle: `Chapter ${pageNumber}`,
@@ -514,6 +688,36 @@
                 if (!term) return "";
                 return `<button type="button" class="highlight-term" data-term-id="${termId}">${term.title}</button>`;
             }).join("")}</div>`;
+        }
+
+        function applyInlineChapterFormatting(text) {
+            return text
+                .replace(/\*([^*]+)\*/g, '<strong>$1</strong>')
+                .replace(/=([^=]+)=/g, '<span class="chapter-emphasis">$1</span>')
+                .replace(/\[\[([^|]+)\|([^\]]+)\]\]/g, '<button type="button" class="highlight-term" data-term-id="$1">$2</button>');
+        }
+
+        function renderChapterBody(pageNum, chapter) {
+            const overrideLines = chapterOverrides[pageNum];
+            if (overrideLines && overrideLines.length > 0) {
+                const textHtml = overrideLines
+                    .map((line) => `<p>${applyInlineChapterFormatting(line)}</p>`)
+                    .join('');
+                const imageSrc = chapterOverrideImages[pageNum];
+                const imageHtml = imageSrc
+                    ? `<figure class="chapter-inline-image-wrap" aria-label="Ekli görsel">
+                        <span class="chapter-inline-image-pin" aria-hidden="true"></span>
+                        <img class="chapter-inline-image" src="${imageSrc}" alt="Tren bileti">
+                    </figure>`
+                    : '';
+                return `${textHtml}${imageHtml}`;
+            }
+            const lines = (chapter && chapter.bodyParagraphs && chapter.bodyParagraphs.length > 0)
+                ? chapter.bodyParagraphs
+                : [loremIpsum.substring(0, 220)];
+            return lines
+                .map((line) => `<p>${applyInlineChapterFormatting(line)}</p>`)
+                .join('');
         }
 
         function inferTrackInfoFromSrc(src) {
@@ -663,10 +867,8 @@
                     let pageNumStr = pageNum.toString();
                     frontEl.innerHTML = `
                         <div class="content-area">
-                            <h2>${chapter.chapterTitle}</h2>
-                            <p>${loremIpsum}</p>
-                            <br>
-                            <p>${loremIpsum.substring(0, 150)}...</p>
+                            <h2>${chapterTitleOverrides[pageNum] || chapter.chapterTitle}</h2>
+                            ${renderChapterBody(pageNum, chapter)}
                             ${renderHighlightTerms(chapter.highlightTerms)}
                         </div>
                         <div class="page-number right-page-number">${pageNumStr}</div>
@@ -695,8 +897,8 @@
                      let pageNumStr = pageNum.toString();
                      backEl.innerHTML = `
                         <div class="content-area">
-                            <h2>${chapter.chapterTitle}</h2>
-                            <p>${loremIpsum.substring(0, 200)}</p>
+                            <h2>${chapterTitleOverrides[pageNum] || chapter.chapterTitle}</h2>
+                            ${renderChapterBody(pageNum, chapter)}
                             ${renderHighlightTerms(chapter.highlightTerms)}
                         </div>
                         <div class="page-number left-page-number">${pageNumStr}</div>
