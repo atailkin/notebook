@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ölümün kitabı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.7/jsmediatags.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+        body {
+            background-color: #1a1a1a;
+            background-image: radial-gradient(circle at center, #2a2a2a 0%, #111 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling, focus on book */
+            font-family: 'Crimson Text', serif;
+            perspective: 1500px; /* Essential for 3D page flipping */
+        }
+
+        .book-container {
+            width: 90vw;
+            max-width: 1000px;
+            height: 80vh;
+            max-height: 700px;
+            position: relative;
+            transform-style: preserve-3d;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            background-color: transparent; 
+            cursor: grab;
+        }
+        
+        .book-container:active {
+            cursor: grabbing;
+        }
+
+        /* The spine of the book */
+        .spine {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            transform: translateX(-50%);
+            background: linear-gradient(to right, #2c1a0c 0%, #4a3018 50%, #2c1a0c 100%);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+            border-radius: 5px;
+            z-index: 0;
+        }
+
+        .page {
+            position: absolute;
+            width: 50%; /* Each page is half the book width */
+            height: 100%;
+            top: 0;
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+            background-color: #f4e8d3; /* Old paper color */
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.1) 0%, transparent 5%, transparent 95%, rgba(0,0,0,0.05) 100%),
+                url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.05"/></svg>');
+            border-radius: 2px 8px 8px 2px;
+            box-shadow: inset 0 0 30px rgba(139, 69, 19, 0.1), 0 0 5px rgba(0,0,0,0.2);
+            /* Slightly shift right-side pages so they stack */
+            right: 0; 
+        }
+
+        /* Left side pages need different origin and initial setup */
+        .page.left-side {
+            transform-origin: right center;
+            left: 0;
+            right: auto;
+            border-radius: 8px 2px 2px 8px;
+            /* Hide initially behind right pages */
+            transform: rotateY(-180deg); 
+            z-index: 0;
+        }
+
+        /* Front and back of each page leaf */
+        .page-front, .page-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            padding: 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-back {
+            transform: rotateY(180deg);
+            /* Darker gradient near the spine on the back */
+            background: linear-gradient(to left, rgba(0,0,0,0.1) 0%, transparent 5%);
+        }
+
+        .cover {
+            background-color: #3b2313;
+            background-image: 
+                linear-gradient(to bottom, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.2) 100%),
+                url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.2"/></svg>');
+            border: 2px solid #1a0f08;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 5px 5px 15px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Engraved Title Style */
+        .engraved-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 5rem;
+            font-weight: 700;
+            color: #2a180c; /* Very dark brown, almost black */
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            /* The engraved effect using text-shadow */
+            text-shadow: 
+                -1px -1px 1px rgba(255,255,255,0.1),
+                1px 1px 2px rgba(0,0,0,0.8),
+                inset 1px 1px 2px rgba(0,0,0,0.5);
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        /* Decorative border for the cover */
+        .cover-border {
+            position: absolute;
+            top: 20px;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            border: 2px solid rgba(20, 10, 5, 0.5);
+            box-shadow: 
+                inset 1px 1px 2px rgba(255,255,255,0.05),
+                1px 1px 2px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+
+        .author-name {
+            font-family: 'Crimson Text', serif;
+            font-size: 1.5rem;
+            color: #2a180c;
+            font-style: italic;
+            position: absolute;
+            bottom: 40px;
+            text-shadow: 
+                -1px -1px 1px rgba(255,255,255,0.1),
+                1px 1px 1px rgba(0,0,0,0.6);
+        }
+
+        .content-area {
+            flex-grow: 1;
+            color: #2c1e16; /* Faded ink color */
+            font-size: 1.1rem;
+            line-height: 1.6;
+            overflow: hidden; /* Prevent text spilling out */
+        }
+
+        .content-area h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(44, 30, 22, 0.2);
+            padding-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .page-number {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #5c4a3d;
+            margin-top: auto; /* Push to bottom */
+            padding-top: 10px;
+        }
+        
+        .left-page-number {
+            text-align: left;
+        }
+        
+        .right-page-number {
+            text-align: right;
+        }
+
+        /* Z-index management classes */
+        .flipped {
+            transform: rotateY(-180deg);
+        }
+        
+        /* Hint overlay */
+        #interaction-hint {
+            position: fixed;
+            bottom: 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-family: sans-serif;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        .mute-toggle {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 100;
+            border: 1px solid rgba(244, 232, 211, 0.4);
+            background: rgba(20, 20, 20, 0.8);
+            color: #f4e8d3;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: sans-serif;
+            cursor: pointer;
+        }
+
+        .local-player-panel {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            width: 320px;
+            z-index: 110;
+            border: 1px solid rgba(244, 232, 211, 0.35);
+            border-radius: 10px;
+            background: rgba(12, 12, 12, 0.82);
+            color: #f4e8d3;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+            font-family: sans-serif;
+            padding: 10px;
+        }
+
+        .local-player-title {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .local-player-meta {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .local-cover {
+            width: 68px;
+            height: 68px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid rgba(244, 232, 211, 0.25);
+            background: rgba(244, 232, 211, 0.1);
+        }
+
+        .local-track-details {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 3px;
+        }
+
+        .local-track-name,
+        .local-track-artist {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .local-track-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .local-track-artist {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .local-player-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .local-player-controls button {
+            border: 1px solid rgba(244, 232, 211, 0.45);
+            background: transparent;
+            color: #f4e8d3;
+            border-radius: 6px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .local-player-volume {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+
+        .local-player-volume input {
+            width: 100%;
+        }
+
+        .highlight-term {
+            display: inline-block;
+            margin: 8px 6px 0 0;
+            border: none;
+            background: transparent;
+            color: #5a2f1d;
+            font-family: 'Crimson Text', serif;
+            font-size: 1rem;
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-decoration-color: rgba(90, 47, 29, 0.45);
+            text-underline-offset: 3px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .highlight-term:hover {
+            color: #2f170d;
+            text-decoration-color: rgba(90, 47, 29, 0.8);
+        }
+
+        .highlight-term:focus-visible {
+            outline: 2px solid #5a2f1d;
+            outline-offset: 3px;
+            border-radius: 3px;
+        }
+
+        .term-tooltip {
+            position: fixed;
+            display: none;
+            z-index: 120;
+            max-width: 320px;
+            background: #f4e8d3;
+            border: 1px solid rgba(44, 30, 22, 0.35);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: #2c1e16;
+        }
+
+        .term-tooltip.visible {
+            display: block;
+        }
+
+        .term-tooltip h3 {
+            margin: 0 24px 8px 0;
+            font-size: 1.05rem;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .term-tooltip p {
+            margin: 0;
+            line-height: 1.4;
+            font-size: 0.95rem;
+        }
+
+        .term-tooltip-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            border: none;
+            background: transparent;
+            color: #2c1e16;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .cat-gif {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 90;
+            pointer-events: none;
+            width: 410px;
+            height: 360px;
+            object-fit: contain;
+            animation: catBob 2.2s ease-in-out infinite;
+        }
+
+        .cat-gif.hidden {
+            display: none;
+        }
+
+        @keyframes catBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        @media (max-width: 900px) {
+            .local-player-panel {
+                width: 260px;
+            }
+            .cat-gif {
+                right: 12px;
+                bottom: 12px;
+                width: 250px;
+                height: 220px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="book-container" id="book">
+        <div class="spine"></div>
+        
+        <!-- We will generate pages via JS to keep HTML clean, 
+             but we define the structure here for clarity -->
+        <div id="pages-wrapper"></div>
+    </div>
+
+    <div id="local-player-panel" class="local-player-panel" aria-label="Local music player">
+        <div class="local-player-title">Music Player</div>
+        <div class="local-player-meta">
+            <img id="local-cover" class="local-cover" alt="Track cover art">
+            <div class="local-track-details">
+                <div id="local-track-name" class="local-track-name">No track loaded</div>
+                <div id="local-track-artist" class="local-track-artist">Unknown artist</div>
+            </div>
+        </div>
+        <div class="local-player-controls">
+            <button id="local-prev" type="button">Prev</button>
+            <button id="local-play-pause" type="button">Play</button>
+            <button id="local-next" type="button">Next</button>
+            <button id="local-shuffle" type="button">Shuffle Off</button>
+        </div>
+        <label class="local-player-volume" for="local-volume">
+            <span>Volume</span>
+            <input id="local-volume" type="range" min="0" max="1" step="0.01" value="0.7">
+        </label>
+        <audio id="local-player-audio" preload="metadata"></audio>
+    </div>
+
+    <button id="mute-toggle" class="mute-toggle" type="button" aria-pressed="false">Sound: On</button>
+    <div id="interaction-hint">Click & Drag left/right to turn pages</div>
+    <div id="term-tooltip" class="term-tooltip" role="dialog" aria-hidden="true" aria-live="polite">
+        <button id="term-tooltip-close" class="term-tooltip-close" type="button" aria-label="Close term information">X</button>
+        <h3 id="term-tooltip-title">Term</h3>
+        <p id="term-tooltip-body">Information goes here.</p>
+    </div>
+    <img id="cat-gif" class="cat-gif hidden" src="cat.gif" alt="" aria-hidden="true">
+
+    <script>
+        const TOTAL_PAGES = 12; // 12 physical leaves = Cover, Prologue, 21 Pages/Chapters, Back Cover
+        const book = document.getElementById('book');
+        const pagesWrapper = document.getElementById('pages-wrapper');
+        const hint = document.getElementById('interaction-hint');
+        const muteToggleButton = document.getElementById('mute-toggle');
+        const localPlayerAudio = document.getElementById('local-player-audio');
+        const localTrackName = document.getElementById('local-track-name');
+        const localTrackArtist = document.getElementById('local-track-artist');
+        const localCover = document.getElementById('local-cover');
+        const localVolume = document.getElementById('local-volume');
+        const localPrevButton = document.getElementById('local-prev');
+        const localPlayPauseButton = document.getElementById('local-play-pause');
+        const localNextButton = document.getElementById('local-next');
+        const localShuffleButton = document.getElementById('local-shuffle');
+        const catGif = document.getElementById('cat-gif');
+        const tooltip = document.getElementById('term-tooltip');
+        const tooltipTitle = document.getElementById('term-tooltip-title');
+        const tooltipBody = document.getElementById('term-tooltip-body');
+        const tooltipClose = document.getElementById('term-tooltip-close');
+        
+        let pages = [];
+        let currentPageIndex = 0; // The right-side page currently on top
+        let isAudioEnabled = true;
+        const flipAudio = new Audio('pageflip.mp3');
+        flipAudio.preload = 'auto';
+        let activeTermTrigger = null;
+        let localTrackIndex = 0;
+        let isLocalShuffleEnabled = false;
+        let activeCoverUrl = null;
+
+        const mediaConfig = {
+            localTracks: [
+                { src: 'music1.mp3', fallbackTitle: 'Track 1', fallbackArtist: 'Unknown Artist' },
+                { src: 'music2.mp3', fallbackTitle: 'Track 2', fallbackArtist: 'Unknown Artist' },
+                { src: 'music3.mp3', fallbackTitle: 'Track 3', fallbackArtist: 'Unknown Artist' },
+                { src: 'music4.mp3', fallbackTitle: 'Track 4', fallbackArtist: 'Unknown Artist' },
+                { src: 'music5.mp3', fallbackTitle: 'Track 5', fallbackArtist: 'Unknown Artist' }
+            ],
+            catGif: {
+                showCat: true,
+                src: 'cat.gif'
+            }
+        };
+        
+        // Decoy text generator
+        const loremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.";
+
+        const termDetails = {
+            ashCodex: { title: "Ash Codex", description: "Placeholder lore entry. Add final codex history and related factions later." },
+            emberCourt: { title: "Ember Court", description: "Placeholder lore entry. Define this court's role, alliances, and conflicts." },
+            voidSigil: { title: "Void Sigil", description: "Placeholder lore entry. Add the sigil origin and practical effects." },
+            nightWardens: { title: "Night Wardens", description: "Placeholder lore entry. Describe purpose, hierarchy, and legacy." },
+            blackHarbor: { title: "Black Harbor", description: "Placeholder lore entry. Add location details and notable events." },
+            redConclave: { title: "Red Conclave", description: "Placeholder lore entry. Insert political and arcane context." }
+        };
+
+        const termRotation = Object.keys(termDetails);
+        const chapterItems = Array.from({ length: 21 }, (_, index) => {
+            const pageNumber = index + 1;
+            return {
+                pageNumber,
+                chapterTitle: `Chapter ${pageNumber}`,
+                highlightTerms: [
+                    termRotation[index % termRotation.length],
+                    termRotation[(index + 2) % termRotation.length]
+                ]
+            };
+        });
+
+        const bookContent = {
+            metadata: {
+                title: "Ölüm",
+                author: "Vaelen Zebul"
+            },
+            prologue: {
+                title: "Prologue Notes",
+                highlightTerms: ["ashCodex", "nightWardens", "voidSigil"]
+            },
+            chapters: chapterItems
+        };
+
+        function getChapterByPage(pageNumber) {
+            return bookContent.chapters.find((chapter) => chapter.pageNumber === pageNumber) || {
+                chapterTitle: `Chapter ${pageNumber}`,
+                highlightTerms: []
+            };
+        }
+
+        function renderHighlightTerms(termIds) {
+            if (!termIds || termIds.length === 0) return "";
+            return `<div>${termIds.map((termId) => {
+                const term = termDetails[termId];
+                if (!term) return "";
+                return `<button type="button" class="highlight-term" data-term-id="${termId}">${term.title}</button>`;
+            }).join("")}</div>`;
+        }
+
+        function initLocalPlayer() {
+            const tracks = mediaConfig.localTracks;
+            if (!tracks || tracks.length === 0) {
+                localTrackName.textContent = 'Add tracks in mediaConfig.localTracks';
+                localTrackArtist.textContent = 'Unknown artist';
+                return;
+            }
+
+            localPlayerAudio.volume = Number(localVolume.value);
+            localCover.src = '';
+
+            function updateTrackMetadata(track) {
+                if (activeCoverUrl) {
+                    URL.revokeObjectURL(activeCoverUrl);
+                    activeCoverUrl = null;
+                }
+
+                const fallbackTitle = track.fallbackTitle || track.src;
+                const fallbackArtist = track.fallbackArtist || 'Unknown artist';
+                localTrackName.textContent = fallbackTitle;
+                localTrackArtist.textContent = fallbackArtist;
+                localCover.removeAttribute('src');
+
+                if (!window.jsmediatags) return;
+
+                window.jsmediatags.read(track.src, {
+                    onSuccess: ({ tags }) => {
+                        localTrackName.textContent = tags.title || fallbackTitle;
+                        localTrackArtist.textContent = tags.artist || fallbackArtist;
+
+                        if (tags.picture && tags.picture.data && tags.picture.format) {
+                            const byteArray = new Uint8Array(tags.picture.data);
+                            const blob = new Blob([byteArray], { type: tags.picture.format });
+                            activeCoverUrl = URL.createObjectURL(blob);
+                            localCover.src = activeCoverUrl;
+                        } else {
+                            localCover.removeAttribute('src');
+                        }
+                    },
+                    onError: () => {
+                        localTrackName.textContent = fallbackTitle;
+                        localTrackArtist.textContent = fallbackArtist;
+                        localCover.removeAttribute('src');
+                    }
+                });
+            }
+
+            function loadTrack(index, autoplay = false) {
+                const safeIndex = (index + tracks.length) % tracks.length;
+                localTrackIndex = safeIndex;
+                const track = tracks[safeIndex];
+                localPlayerAudio.src = track.src;
+                updateTrackMetadata(track);
+                if (autoplay) {
+                    localPlayerAudio.play().then(() => {
+                        localPlayPauseButton.textContent = 'Pause';
+                    }).catch(() => {});
+                } else {
+                    localPlayPauseButton.textContent = 'Play';
+                }
+            }
+
+            function nextTrack(autoplay = true) {
+                if (isLocalShuffleEnabled) {
+                    const randomIndex = Math.floor(Math.random() * tracks.length);
+                    loadTrack(randomIndex, autoplay);
+                    return;
+                }
+                loadTrack(localTrackIndex + 1, autoplay);
+            }
+
+            function prevTrack() {
+                loadTrack(localTrackIndex - 1, true);
+            }
+
+            localPrevButton.addEventListener('click', prevTrack);
+            localNextButton.addEventListener('click', () => nextTrack(true));
+
+            localPlayPauseButton.addEventListener('click', () => {
+                if (localPlayerAudio.paused) {
+                    localPlayerAudio.play().then(() => {
+                        localPlayPauseButton.textContent = 'Pause';
+                    }).catch(() => {});
+                } else {
+                    localPlayerAudio.pause();
+                    localPlayPauseButton.textContent = 'Play';
+                }
+            });
+
+            localShuffleButton.addEventListener('click', () => {
+                isLocalShuffleEnabled = !isLocalShuffleEnabled;
+                localShuffleButton.textContent = isLocalShuffleEnabled ? 'Shuffle On' : 'Shuffle Off';
+            });
+
+            localVolume.addEventListener('input', () => {
+                localPlayerAudio.volume = Number(localVolume.value);
+            });
+
+            localPlayerAudio.addEventListener('ended', () => nextTrack(true));
+            localPlayerAudio.addEventListener('play', () => { localPlayPauseButton.textContent = 'Pause'; });
+            localPlayerAudio.addEventListener('pause', () => { localPlayPauseButton.textContent = 'Play'; });
+
+            loadTrack(0, false);
+        }
+
+        function initCatGif() {
+            const config = mediaConfig.catGif;
+            if (!config || !config.showCat || !config.src) {
+                catGif.classList.add('hidden');
+                return;
+            }
+
+            catGif.src = config.src;
+            catGif.onload = () => catGif.classList.remove('hidden');
+            catGif.onerror = () => catGif.classList.add('hidden');
+        }
+
+        function createPages() {
+            for (let i = 0; i < TOTAL_PAGES; i++) {
+                const pageEl = document.createElement('div');
+                pageEl.className = 'page';
+                // Set z-index so first page is on top, later pages underneath
+                pageEl.style.zIndex = TOTAL_PAGES - i; 
+
+                const frontEl = document.createElement('div');
+                frontEl.className = 'page-front';
+                
+                const backEl = document.createElement('div');
+                backEl.className = 'page-back';
+
+                // --- CONTENT GENERATION ---
+                
+                // Front side (Right page)
+                if (i === 0) {
+                    // Page 0 Front is the Cover
+                    frontEl.classList.add('cover');
+                    frontEl.innerHTML = `
+                        <div class="cover-border"></div>
+                        <h1 class="engraved-title">${bookContent.metadata.title}</h1>
+                        <div class="author-name">${bookContent.metadata.author}</div>
+                    `;
+                } else {
+                    // Regular right page (Chapters 1, 3, 5... 21)
+                    const pageNum = i * 2 - 1;
+                    const chapter = getChapterByPage(pageNum);
+                    let pageNumStr = pageNum.toString();
+                    frontEl.innerHTML = `
+                        <div class="content-area">
+                            <h2>${chapter.chapterTitle}</h2>
+                            <p>${loremIpsum}</p>
+                            <br>
+                            <p>${loremIpsum.substring(0, 150)}...</p>
+                            ${renderHighlightTerms(chapter.highlightTerms)}
+                        </div>
+                        <div class="page-number right-page-number">${pageNumStr}</div>
+                    `;
+                }
+
+                // Back side (Left page after flipping)
+                if (i === TOTAL_PAGES - 1) {
+                    // Back cover
+                     backEl.classList.add('cover');
+                     backEl.style.background = '#3b2313'; // Plain dark back
+                     backEl.innerHTML = `<div class="cover-border"></div>`;
+                } else if (i === 0) {
+                    // Inside Front Cover / Prologue Notes
+                     backEl.innerHTML = `
+                        <div class="content-area">
+                            <h2>${bookContent.prologue.title}</h2>
+                            <p>${loremIpsum.substring(0, 200)}</p>
+                            ${renderHighlightTerms(bookContent.prologue.highlightTerms)}
+                        </div>
+                    `;
+                } else {
+                     // Regular left page (Chapters 2, 4, 6... 20)
+                     const pageNum = i * 2;
+                     const chapter = getChapterByPage(pageNum);
+                     let pageNumStr = pageNum.toString();
+                     backEl.innerHTML = `
+                        <div class="content-area">
+                            <h2>${chapter.chapterTitle}</h2>
+                            <p>${loremIpsum.substring(0, 200)}</p>
+                            ${renderHighlightTerms(chapter.highlightTerms)}
+                        </div>
+                        <div class="page-number left-page-number">${pageNumStr}</div>
+                    `;
+                }
+
+                pageEl.appendChild(frontEl);
+                pageEl.appendChild(backEl);
+                pagesWrapper.appendChild(pageEl);
+                pages.push(pageEl);
+            }
+        }
+
+        createPages();
+        initLocalPlayer();
+        initCatGif();
+
+        let isDragging = false;
+        let startX = 0;
+        let currentX = 0;
+        let activePage = null;
+        let dragDirection = null;
+        let bookWidth = book.offsetWidth;
+
+        // Hide hint on first interaction
+        function hideHint() {
+            if (hint.style.opacity !== '0') {
+                hint.style.opacity = '0';
+            }
+        }
+
+        function playFlipSound() {
+            if (!isAudioEnabled) return;
+            const sound = flipAudio.cloneNode();
+            sound.volume = 0.5;
+            sound.playbackRate = 0.94 + Math.random() * 0.12; // Subtle pitch variation
+            sound.preservesPitch = false;
+            sound.mozPreservesPitch = false;
+            sound.webkitPreservesPitch = false;
+            sound.play().catch(() => {
+                // Ignore autoplay rejection until the user interacts.
+            });
+        }
+
+        function closeTooltip() {
+            tooltip.classList.remove('visible');
+            tooltip.setAttribute('aria-hidden', 'true');
+            if (activeTermTrigger) {
+                activeTermTrigger.setAttribute('aria-expanded', 'false');
+            }
+            activeTermTrigger = null;
+        }
+
+        function positionTooltip(trigger) {
+            const rect = trigger.getBoundingClientRect();
+            const margin = 12;
+            const tooltipWidth = 320;
+            const tooltipHeight = 160;
+
+            let left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+            let top = rect.bottom + 10;
+
+            left = Math.max(margin, Math.min(left, window.innerWidth - tooltipWidth - margin));
+            if (top + tooltipHeight > window.innerHeight - margin) {
+                top = rect.top - tooltipHeight - 10;
+            }
+            top = Math.max(margin, top);
+
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+        }
+
+        function openTooltip(trigger, termId) {
+            const term = termDetails[termId];
+            if (!term) return;
+
+            if (activeTermTrigger && activeTermTrigger !== trigger) {
+                activeTermTrigger.setAttribute('aria-expanded', 'false');
+            }
+            activeTermTrigger = trigger;
+            activeTermTrigger.setAttribute('aria-expanded', 'true');
+
+            tooltipTitle.textContent = term.title;
+            tooltipBody.textContent = term.description;
+            tooltip.classList.add('visible');
+            tooltip.setAttribute('aria-hidden', 'false');
+            positionTooltip(trigger);
+        }
+
+        function handleDragStart(x) {
+            isDragging = true;
+            startX = x;
+            activePage = null;
+            dragDirection = null;
+            bookWidth = book.offsetWidth; // Recalculate in case of resize
+            hideHint();
+        }
+
+        function handleDragMove(x) {
+            if (!isDragging) return;
+            currentX = x;
+            let diffX = startX - currentX;
+
+            // Determine if user is pulling forward or backward
+            if (!activePage) {
+                if (diffX > 10 && currentPageIndex < TOTAL_PAGES) {
+                    dragDirection = 'forward';
+                    activePage = pages[currentPageIndex];
+                    activePage.style.transition = 'none'; // Disable CSS transition for 1:1 drag
+                    activePage.style.zIndex = TOTAL_PAGES + 10; // Bring to absolute front
+                } else if (diffX < -10 && currentPageIndex > 0) {
+                    dragDirection = 'backward';
+                    activePage = pages[currentPageIndex - 1];
+                    activePage.style.transition = 'none';
+                    activePage.style.zIndex = TOTAL_PAGES + 10;
+                }
+            }
+
+            // Apply rotation proportionally to drag distance
+            if (activePage) {
+                let progress;
+                let maxDrag = bookWidth * 0.8; // Dragging 80% of book width counts as a full turn
+                
+                if (dragDirection === 'forward') {
+                    progress = Math.max(0, Math.min(1, diffX / maxDrag));
+                    let angle = progress * -180;
+                    activePage.style.transform = `rotateY(${angle}deg)`;
+                } else if (dragDirection === 'backward') {
+                    progress = Math.max(0, Math.min(1, -diffX / maxDrag));
+                    let angle = -180 + (progress * 180);
+                    activePage.style.transform = `rotateY(${angle}deg)`;
+                }
+            }
+        }
+
+        function handleDragEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            if (activePage) {
+                let diffX = startX - currentX;
+                let maxDrag = bookWidth * 0.8;
+                activePage.style.transition = ''; // Restore smooth CSS transition
+
+                if (dragDirection === 'forward') {
+                    if (diffX > maxDrag * 0.25) { // 25% threshold to commit to the turn
+                        turnPageForward(activePage);
+                    } else {
+                        // Snap back to right side
+                        activePage.style.transform = '';
+                        activePage.classList.remove('flipped');
+                        activePage.style.zIndex = TOTAL_PAGES - currentPageIndex;
+                    }
+                } else if (dragDirection === 'backward') {
+                    if (-diffX > maxDrag * 0.25) {
+                        turnPageBackward(activePage);
+                    } else {
+                        // Snap back to left side
+                        activePage.style.transform = '';
+                        activePage.classList.add('flipped');
+                        activePage.style.zIndex = currentPageIndex - 1;
+                    }
+                }
+                activePage = null;
+            }
+        }
+
+        book.addEventListener('mousedown', (e) => {
+            handleDragStart(e.clientX);
+            document.body.style.userSelect = 'none'; 
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            handleDragMove(e.clientX);
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            handleDragEnd();
+            document.body.style.userSelect = '';
+        });
+
+        book.addEventListener('touchstart', (e) => {
+            handleDragStart(e.touches[0].clientX);
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            handleDragMove(e.touches[0].clientX);
+        });
+
+        window.addEventListener('touchend', (e) => {
+            handleDragEnd();
+        });
+
+        function turnPageForward(page) {
+            page.style.transform = ''; // Clear inline transform so CSS class takes over
+            page.classList.add('flipped');
+            playFlipSound();
+            
+            let targetZIndex = currentPageIndex;
+            currentPageIndex++;
+            
+            // Allow animation to pass halfway before dropping it behind other pages
+            setTimeout(() => {
+                if(page !== activePage) page.style.zIndex = targetZIndex;
+            }, 400); 
+        }
+
+        function turnPageBackward(page) {
+            page.style.transform = ''; 
+            page.classList.remove('flipped');
+            playFlipSound();
+            
+            currentPageIndex--;
+            let targetZIndex = TOTAL_PAGES - currentPageIndex;
+            
+            setTimeout(() => {
+                if(page !== activePage) page.style.zIndex = targetZIndex;
+            }, 400);
+        }
+
+        pagesWrapper.addEventListener('click', (event) => {
+            const trigger = event.target.closest('.highlight-term');
+            if (!trigger) return;
+            openTooltip(trigger, trigger.dataset.termId);
+        });
+
+        pagesWrapper.addEventListener('keydown', (event) => {
+            const trigger = event.target.closest('.highlight-term');
+            if (!trigger) return;
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openTooltip(trigger, trigger.dataset.termId);
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!tooltip.classList.contains('visible')) return;
+            if (tooltip.contains(event.target)) return;
+            if (event.target.closest('.highlight-term')) return;
+            closeTooltip();
+        });
+
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeTooltip();
+        });
+
+        tooltipClose.addEventListener('click', closeTooltip);
+
+        window.addEventListener('resize', () => {
+            if (activeTermTrigger && tooltip.classList.contains('visible')) {
+                positionTooltip(activeTermTrigger);
+            }
+        });
+
+        muteToggleButton.addEventListener('click', () => {
+            isAudioEnabled = !isAudioEnabled;
+            muteToggleButton.textContent = isAudioEnabled ? 'Sound: On' : 'Sound: Off';
+            muteToggleButton.setAttribute('aria-pressed', isAudioEnabled ? 'false' : 'true');
+        });
+
+    </script>
+</body>
+</html>
