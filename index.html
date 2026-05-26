@@ -276,16 +276,6 @@
         .flipped {
             transform: rotateY(-180deg);
         }
-        
-        /* Hint overlay */
-        #interaction-hint {
-            position: fixed;
-            bottom: 20px;
-            color: rgba(255, 255, 255, 0.5);
-            font-family: sans-serif;
-            pointer-events: none;
-            transition: opacity 0.5s;
-        }
 
         .local-player-panel {
             position: fixed;
@@ -495,7 +485,6 @@
         <audio id="local-player-audio" preload="metadata"></audio>
     </div>
 
-    <div id="interaction-hint">Click & Drag left/right to turn pages</div>
     <div id="term-tooltip" class="term-tooltip" role="dialog" aria-hidden="true" aria-live="polite">
         <button id="term-tooltip-close" class="term-tooltip-close" type="button" aria-label="Close term information">X</button>
         <h3 id="term-tooltip-title">Term</h3>
@@ -507,7 +496,6 @@
         const TOTAL_PAGES = 12; // 12 physical leaves = Cover, Prologue, 21 Pages/Chapters, Back Cover
         const book = document.getElementById('book');
         const pagesWrapper = document.getElementById('pages-wrapper');
-        const hint = document.getElementById('interaction-hint');
         const localPlayerAudio = document.getElementById('local-player-audio');
         const localTrackName = document.getElementById('local-track-name');
         const localTrackArtist = document.getElementById('local-track-artist');
@@ -610,7 +598,7 @@
 
             return {
                 pageNumber,
-                chapterTitle: `Chapter ${pageNumber}`,
+                chapterTitle: `Perde ${pageNumber}`,
                 highlightTerms,
                 bodyParagraphs: [
                     `${lead}, Vaelen Haruspex olayların görünmeyen tarafını takip eder ve sayfa ${pageNumber} boyunca yeni ipuçları toplar.`,
@@ -676,7 +664,7 @@
 
         function getChapterByPage(pageNumber) {
             return bookContent.chapters.find((chapter) => chapter.pageNumber === pageNumber) || {
-                chapterTitle: `Chapter ${pageNumber}`,
+                chapterTitle: `Perde ${pageNumber}`,
                 highlightTerms: []
             };
         }
@@ -923,13 +911,6 @@
         let dragDirection = null;
         let bookWidth = book.offsetWidth;
 
-        // Hide hint on first interaction
-        function hideHint() {
-            if (hint.style.opacity !== '0') {
-                hint.style.opacity = '0';
-            }
-        }
-
         function playFlipSound() {
             if (!isAudioEnabled) return;
             const sound = flipAudio.cloneNode();
@@ -994,7 +975,6 @@
             activePage = null;
             dragDirection = null;
             bookWidth = book.offsetWidth; // Recalculate in case of resize
-            hideHint();
         }
 
         function handleDragMove(x) {
