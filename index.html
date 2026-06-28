@@ -2,24 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-                "*29 Ekim 1854*",
-                "Krush Clinic'in 74 hastayla dolup taştığı haberleriyle uyandım. İnsanlar kliniğe sadece titreyerek giriyor, ancak içeride bambaşka bir şeye dönüşüyorlardı. Semptomlar artık bir zehirlenme tablosundan çıkmıştı. Titremeleri şiddetli ateş takip ediyordu. Ve ardından en korkunç haber geldi. *Bir hasta ölü bulundu.*",
-                "Hastaneye çağırıldım, eskiden ne kadar buraya gelmek istemesem de Kasaba'nın bu halini gördükten sonra insanlara yardım etmeye karar verdim. Bir süre boyunca uyumadan hastalara bakmam gerek. Aynı zamanda bir tedavi bulamam gerek... Babamın notları, hastalık, buraya çağırılmam hepsi başımı ağrıtıyor. Yoruldum ve bitkinim."
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.7/jsmediatags.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
 
-                "*31 Ekim 1854*",
-                "İki gündür aralıksız çalışıyorum, kafamı birden fazla şeye dağıttım. Hem hastalara bakıyorum hem de babamın araştırmalarına ve sonunda buldum olay hiç bir zaman hastalık olmadı. Her şey babamın bulduğu ölümsüzlük ile doğanın dengesini bozması ile bağlantılı. Bunu ispatlayamam ama tedaviyi bulduktan sonra ispat kimin umrunda. Tedavi ###########,",
-                "*Bunu bir an önce Daniil'e bildirmem gerek*"
+        body {
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-                "*3 Kasım 1854*",
             overflow: hidden; /* Prevent scrolling, focus on book */
             font-family: 'Crimson Text', serif;
             perspective: 1500px; /* Essential for 3D page flipping */
+            background-color: #0d0d0d;
+            margin: 0;
         }
 
         .book-container {
@@ -37,6 +33,14 @@
         
         .book-container:active {
             cursor: grabbing;
+        }
+
+        #pages-wrapper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
         }
 
         /* The spine of the book */
@@ -92,6 +96,7 @@
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
+            overflow: visible;
         }
 
         .page-back {
@@ -159,6 +164,8 @@
 
         .content-area {
             flex-grow: 1;
+            display: flex;
+            flex-direction: column;
             color: #2c1e16; /* Faded ink color */
             font-size: calc(1.1rem * var(--content-scale, 1));
             line-height: 1.55;
@@ -291,7 +298,7 @@
         .blood-redaction::after {
             content: '';
             position: absolute;
-            inset: -0.9em -0.7em -0.55em;
+            inset: -3.6em -3.2em -2.8em;
             background: url('lineblood.png') center center / contain no-repeat;
             opacity: 0.95;
             mix-blend-mode: multiply;
@@ -300,23 +307,22 @@
         }
 
         .chapter-bottom-splatter {
-            margin-top: auto;
-            padding-top: 18px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
+            position: absolute;
+            bottom: -20%;
+            left: 50%;
+            transform: translateX(-50%) rotate(-1.6deg);
+            width: 624px;
             pointer-events: none;
+            overflow: visible;
         }
 
         .chapter-bottom-splatter img {
             display: block;
-            width: min(100%, 260px);
+            width: 100%;
             height: auto;
             opacity: 0.9;
             mix-blend-mode: multiply;
             filter: sepia(0.22) contrast(1.08) saturate(0.78) brightness(0.95);
-            transform: rotate(-1.6deg);
-            transform-origin: center bottom;
         }
 
         .page-number {
@@ -548,7 +554,7 @@
         <audio id="local-player-audio" preload="metadata"></audio>
     </div>
 
-    <div id="term-tooltip" class="term-tooltip" role="dialog" aria-hidden="true" aria-live="polite">
+    <div id="term-tooltip" class="term-tooltip" role="dialog" aria-hidden="true">
         <button id="term-tooltip-close" class="term-tooltip-close" type="button" aria-label="Close term information">X</button>
         <h3 id="term-tooltip-title">Term</h3>
         <p id="term-tooltip-body">Information goes here.</p>
@@ -556,7 +562,7 @@
     <img id="cat-gif" class="cat-gif hidden" src="cat.gif" alt="" aria-hidden="true">
 
     <script>
-        const TOTAL_PAGES = 12; // 12 physical leaves = Cover, Prologue, 21 Pages/Chapters, Back Cover
+        const TOTAL_PAGES = 7; // 7 physical leaves = Cover/Prologue + 5 content leaves (pages 1–10) + Back Cover
         const book = document.getElementById('book');
         const pagesWrapper = document.getElementById('pages-wrapper');
         const localPlayerAudio = document.getElementById('local-player-audio');
@@ -599,12 +605,7 @@
         const loremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.";
 
         const termDetails = {
-            ashCodex: { title: "Haruspex", description: "Haruspex, antik Roma ve öncesinde kurban edilen hayvanların iç organlarını inceleyerek tanrıların iradesini yorumlayan kişilere denirdi." },
-            emberCourt: { title: "Ember Court", description: "Placeholder lore entry. Define this court's role, alliances, and conflicts." },
-            voidSigil: { title: "Void Sigil", description: "Placeholder lore entry. Add the sigil origin and practical effects." },
-            nightWardens: { title: "Night Wardens", description: "Placeholder lore entry. Describe purpose, hierarchy, and legacy." },
-            blackHarbor: { title: "Black Harbor", description: "Placeholder lore entry. Add location details and notable events." },
-            redConclave: { title: "Red Conclave", description: "Placeholder lore entry. Insert political and arcane context." }
+            ashCodex: { title: "Haruspex", description: "Haruspex, antik Roma ve öncesinde kurban edilen hayvanların iç organlarını inceleyerek tanrıların iradesini yorumlayan kişilere denirdi." }
         };
 
         const chapterLeadFragments = [
@@ -722,7 +723,9 @@
                 ],
                 inlineImageSrc: overrides.inlineImageSrc || '',
                 inlineImageAudioSrc: overrides.inlineImageAudioSrc || '',
-                inlineImageAlt: overrides.inlineImageAlt || ''
+                inlineImageAlt: overrides.inlineImageAlt || '',
+                bottomImageSrc: overrides.bottomImageSrc || '',
+                bottomImageAlt: overrides.bottomImageAlt || ''
             };
         }
 
@@ -771,17 +774,17 @@
                 .map((line) => `<p>${applyInlineChapterFormatting(line)}</p>`)
                 .join('');
             const imageHtml = chapter && chapter.inlineImageSrc
-                ? `<figure class="chapter-inline-image-wrap" aria-label="Ekli görsel">
-                        <span class="chapter-inline-image-pin" aria-hidden="true"></span>
-                        ${chapter.inlineImageAudioSrc ? `<button type="button" class="chapter-inline-image-button" data-audio-src="${chapter.inlineImageAudioSrc}" aria-label="${chapter.inlineImageAlt || 'Görseli oynat'}">` : ''}
-                        <img class="chapter-inline-image" src="${chapter.inlineImageSrc}" alt="${chapter.inlineImageAlt || 'Ekli görsel'}">
-                        ${chapter.inlineImageAudioSrc ? `</button>` : ''}
-                    </figure>`
+                ? chapter.inlineImageAudioSrc
+                    ? `<button type="button" class="chapter-inline-image-button chapter-inline-image-wrap" data-audio-src="${chapter.inlineImageAudioSrc}" aria-label="${chapter.inlineImageAlt || 'Görseli oynat'}">
+                            <span class="chapter-inline-image-pin" aria-hidden="true"></span>
+                            <img class="chapter-inline-image" src="${chapter.inlineImageSrc}" alt="${chapter.inlineImageAlt || 'Ekli görsel'}">
+                        </button>`
+                    : `<figure class="chapter-inline-image-wrap" aria-label="Ekli görsel">
+                            <span class="chapter-inline-image-pin" aria-hidden="true"></span>
+                            <img class="chapter-inline-image" src="${chapter.inlineImageSrc}" alt="${chapter.inlineImageAlt || 'Ekli görsel'}">
+                        </figure>`
                 : '';
-            const bottomImageHtml = chapter && chapter.bottomImageSrc
-                ? `<div class="chapter-bottom-splatter"><img src="${chapter.bottomImageSrc}" alt="${chapter.bottomImageAlt || ''}" aria-hidden="true"></div>`
-                : '';
-            return `${textHtml}${imageHtml}${bottomImageHtml}`;
+            return `${textHtml}${imageHtml}`;
         }
 
         function fitContentAreas() {
@@ -809,7 +812,7 @@
 
                 if (index === TOTAL_PAGES - 1) {
                     return {
-                        front: { kind: 'chapter', pageNumber: index * 2 - 1 },
+                        front: { kind: 'cover-back' },
                         back: { kind: 'cover-back' }
                     };
                 }
@@ -831,11 +834,7 @@
             }
 
             if (side.kind === 'prologue') {
-                return `
-                    <div class="content-area">
-                        <p>${loremIpsum.substring(0, 200)}</p>
-                    </div>
-                `;
+                return `<div class="content-area"></div>`;
             }
 
             if (side.kind === 'cover-back') {
@@ -844,12 +843,16 @@
 
             const chapter = getChapterByPage(side.pageNumber);
             const pageNumStr = side.pageNumber.toString();
+            const bottomImageHtml = chapter && chapter.bottomImageSrc
+                ? `<div class="chapter-bottom-splatter"><img src="${chapter.bottomImageSrc}" alt="${chapter.bottomImageAlt || ''}" aria-hidden="true"></div>`
+                : '';
 
             return `
                 <div class="content-area">
                     <h2>${chapter.chapterTitle}</h2>
                     ${renderChapterBody(chapter)}
                 </div>
+                ${bottomImageHtml}
                 <div class="page-number ${side.pageNumber % 2 === 0 ? 'left-page-number' : 'right-page-number'}">${pageNumStr}</div>
             `;
         }
@@ -962,7 +965,6 @@
 
         const cassetteAudio = new Audio('recording.mp3');
         cassetteAudio.preload = 'auto';
-        cassetteAudio.volume = Number(localVolume.value);
 
         function playCassetteRecording() {
             if (!cassetteAudio.paused) {
@@ -1042,6 +1044,7 @@
 
         createPages();
         initLocalPlayer();
+        cassetteAudio.volume = Number(localVolume.value); // Set after initLocalPlayer so volume input is ready
         initCatGif();
         window.requestAnimationFrame(fitContentAreas);
 
