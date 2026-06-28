@@ -1027,6 +1027,11 @@
                     frontEl.classList.add('cover');
                 }
 
+                if (pageSides.front.kind === 'cover-back') {
+                    frontEl.classList.add('cover');
+                    frontEl.style.background = '#3b2313';
+                }
+
                 if (pageSides.back.kind === 'cover-back') {
                     backEl.classList.add('cover');
                     backEl.style.background = '#3b2313';
@@ -1128,7 +1133,7 @@
 
             // Determine if user is pulling forward or backward
             if (!activePage) {
-                if (diffX > 10 && currentPageIndex < TOTAL_PAGES) {
+                if (diffX > 10 && currentPageIndex < pages.length - 1) {
                     dragDirection = 'forward';
                     activePage = pages[currentPageIndex];
                     activePage.style.transition = 'none'; // Disable CSS transition for 1:1 drag
