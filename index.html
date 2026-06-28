@@ -160,19 +160,28 @@
         .content-area {
             flex-grow: 1;
             color: #2c1e16; /* Faded ink color */
-            font-size: 1.1rem;
-            line-height: 1.6;
-            min-height: 0; 
+            font-size: calc(1.1rem * var(--content-scale, 1));
+            line-height: 1.55;
+            min-height: 0;
+            padding-right: 4px;
             overflow: hidden; /* Disabled scrolling entirely */
         }
 
         .content-area h2 {
             font-family: 'Playfair Display', serif;
-            font-size: 2rem;
+            font-size: calc(2rem * var(--content-scale, 1));
             margin-bottom: 1rem;
             border-bottom: 1px solid rgba(44, 30, 22, 0.2);
             padding-bottom: 0.5rem;
             text-align: center;
+        }
+
+        .content-area p {
+            margin: 0 0 0.85rem;
+        }
+
+        .content-area p:last-child {
+            margin-bottom: 0;
         }
 
         .chapter-emphasis {
@@ -709,6 +718,20 @@
             return `${textHtml}${imageHtml}`;
         }
 
+        function fitContentAreas() {
+            document.querySelectorAll('.content-area').forEach((contentArea) => {
+                contentArea.style.setProperty('--content-scale', '1');
+
+                const minScale = 0.82;
+                let scale = 1;
+
+                while (contentArea.scrollHeight > contentArea.clientHeight && scale > minScale) {
+                    scale = Math.max(minScale, scale - 0.04);
+                    contentArea.style.setProperty('--content-scale', scale.toFixed(2));
+                }
+            });
+        }
+
         function createPageManifest() {
             return Array.from({ length: TOTAL_PAGES }, (_, index) => {
                 if (index === 0) {
@@ -955,6 +978,7 @@
         createPages();
         initLocalPlayer();
         initCatGif();
+        window.requestAnimationFrame(fitContentAreas);
 
         let isDragging = false;
         let startX = 0;
@@ -1189,7 +1213,11 @@
             if (activeTermTrigger && tooltip.classList.contains('visible')) {
                 positionTooltip(activeTermTrigger);
             }
+
+            fitContentAreas();
         });
+
+        window.addEventListener('load', fitContentAreas);
 
     </script>
 </body>
