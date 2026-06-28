@@ -256,6 +256,19 @@
             z-index: 0;
         }
 
+        .chapter-inline-image-button {
+            padding: 0;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .chapter-inline-image-button:focus-visible {
+            outline: 2px solid rgba(90, 47, 29, 0.8);
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
         .page-number {
             text-align: center;
             font-size: 0.9rem;
@@ -602,6 +615,16 @@
                     "Bir anlık dinlenebilmek için kargo kasalarından birine yaslandım. Her yerim sızlıyor, giysilerim yırtık pırtık halde, Gözlerimi kapatmak, gün boyunca uyumak ve babamın evini bulmaktan başka bir şey istemiyordum.",
                     "Uzun bir yürüyüşten sonra eve vardım, daha evi incelemeye vaktim olmadı ancak tek diyebileceğim şey, köy halkının bana iyi bakmadığı. İnsanlar bana sanki yerin derinliklerinden, lanetli topraklardan çıkmışım gibi davranıyordu. Her neyse bugün yapılması gereken çok şey var, evi yaşama uygun bir hale getirdikten sonra bilgisayarı incelemem lazım. Yarın da babamın otopsisine baksam iyi olur."
                 ]
+            },
+            6: {
+                bodyParagraphs: [
+                    "*27 Ekim 1854*",
+                    "Babamın eski eşyaları arasında tozlu bir kaset buldum. Üzerinde hiçbir etiket yok, sadece solmuş bir tarih ve çatlamış bir plastik kapak var.",
+                    "Kaseti elime aldığımda garip bir şekilde çalışan hâlâ bir şeyler olduğunu hissettim. Belki de içindeki kayıt, babamın evde bıraktığı son ipucudur."
+                ],
+                inlineImageSrc: 'casette.png',
+                inlineImageAudioSrc: 'recording.mp3',
+                inlineImageAlt: 'Kaset'
             }
         };
 
@@ -634,7 +657,9 @@
 
             const highlightTerms = pageNumber <= 4
                 ? []
-                : [primaryTermId, secondaryTermId];
+                : pageNumber === 5
+                    ? []
+                    : [primaryTermId, secondaryTermId];
 
             return {
                 pageNumber,
@@ -644,7 +669,9 @@
                     `${lead}, Vaelen Haruspex olayların görünmeyen tarafını takip eder ve sayfa ${pageNumber} boyunca yeni ipuçları toplar.`,
                     `${secondLead}, dosyalar ve tanıklıklar birbiriyle çelişse de Vaelen adım adım gerçeğe yaklaşır.`
                 ],
-                inlineImageSrc: overrides.inlineImageSrc || ''
+                inlineImageSrc: overrides.inlineImageSrc || '',
+                inlineImageAudioSrc: overrides.inlineImageAudioSrc || '',
+                inlineImageAlt: overrides.inlineImageAlt || ''
             };
         }
 
@@ -705,7 +732,9 @@
             const imageHtml = chapter && chapter.inlineImageSrc
                 ? `<figure class="chapter-inline-image-wrap" aria-label="Ekli görsel">
                         <span class="chapter-inline-image-pin" aria-hidden="true"></span>
-                        <img class="chapter-inline-image" src="${chapter.inlineImageSrc}" alt="Tren bileti">
+                        ${chapter.inlineImageAudioSrc ? `<button type="button" class="chapter-inline-image-button" data-audio-src="${chapter.inlineImageAudioSrc}" aria-label="${chapter.inlineImageAlt || 'Görseli oynat'}">` : ''}
+                        <img class="chapter-inline-image" src="${chapter.inlineImageSrc}" alt="${chapter.inlineImageAlt || 'Ekli görsel'}">
+                        ${chapter.inlineImageAudioSrc ? `</button>` : ''}
                     </figure>`
                 : '';
             return `${textHtml}${imageHtml}`;
@@ -872,6 +901,14 @@
             localPlayerAudio.addEventListener('pause', () => { localPlayPauseButton.textContent = 'Oynat'; });
 
             loadTrack(0, false);
+        }
+
+        const cassetteAudio = new Audio('recording.mp3');
+        cassetteAudio.preload = 'auto';
+
+        function playCassetteRecording() {
+            cassetteAudio.currentTime = 0;
+            cassetteAudio.play().catch(() => {});
         }
 
         function initCatGif() {
@@ -1123,6 +1160,12 @@
         }
 
         pagesWrapper.addEventListener('click', (event) => {
+            const cassetteButton = event.target.closest('.chapter-inline-image-button');
+            if (cassetteButton) {
+                playCassetteRecording();
+                return;
+            }
+
             const trigger = event.target.closest('.highlight-term');
             if (!trigger) return;
             openTooltip(trigger, trigger.dataset.termId);
