@@ -529,6 +529,7 @@
         flipAudio.preload = 'auto';
         let activeTermTrigger = null;
         let localTrackIndex = 0;
+        let cassetteWasPausingMusic = false;
 
         const mediaConfig = {
             localTracks: [
@@ -891,7 +892,9 @@
             });
 
             localVolume.addEventListener('input', () => {
-                localPlayerAudio.volume = Number(localVolume.value);
+                const volume = Number(localVolume.value);
+                localPlayerAudio.volume = volume;
+                cassetteAudio.volume = volume;
             });
 
             localPlayerAudio.addEventListener('ended', () => nextTrack(true));
@@ -903,11 +906,30 @@
 
         const cassetteAudio = new Audio('recording.mp3');
         cassetteAudio.preload = 'auto';
+        cassetteAudio.volume = Number(localVolume.value);
 
         function playCassetteRecording() {
-            cassetteAudio.currentTime = 0;
-            cassetteAudio.play().catch(() => {});
+            if (!cassetteAudio.paused) {
+                cassetteAudio.pause();
+                return;
+            }
+
+            cassetteWasPausingMusic = !localPlayerAudio.paused;
+            if (cassetteWasPausingMusic) {
+                localPlayerAudio.pause();
+            }
+
+            cassetteAudio.play().catch(() => {
+                cassetteWasPausingMusic = false;
+            });
         }
+
+        cassetteAudio.addEventListener('ended', () => {
+            if (cassetteWasPausingMusic) {
+                localPlayerAudio.play().catch(() => {});
+            }
+            cassetteWasPausingMusic = false;
+        });
 
         function initCatGif() {
             const config = mediaConfig.catGif;
