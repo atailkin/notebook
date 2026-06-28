@@ -256,43 +256,6 @@
             z-index: 0;
         }
 
-        .tape-recorder {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            margin: 22px auto;
-            padding: 16px 18px;
-            width: fit-content;
-            max-width: 100%;
-            background: linear-gradient(180deg, #f2e8d0 0%, #e3d1ac 100%);
-            border: 1px solid rgba(89, 60, 32, 0.25);
-            border-radius: 18px;
-            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
-        }
-
-        .tape-recorder-play {
-            border: 1px solid rgba(44, 30, 22, 0.35);
-            background: #3a2517;
-            color: #f7e9d6;
-            padding: 10px 18px;
-            border-radius: 999px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.18s ease, background-color 0.18s ease;
-        }
-
-        .tape-recorder-play:hover {
-            transform: translateY(-1px);
-            background: #4a321f;
-        }
-
-        .tape-recorder-play:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
-        }
-
         .page-number {
             text-align: center;
             font-size: 0.9rem;
@@ -657,35 +620,20 @@
         };
 
         const chapterTitleOverrides = {
-            4: "Yolculuk 1"
+            4: "Yolculuk"
         };
 
         const chapterOverrides = {
             4: [
-                "26 Ekim 1854",
-                "",
-                "",
-                "Demir vagondan dışarı çıktım, sonbaharla beraber otların ve tozların kokusu, yüzüme bir tokat gibi çarptı.",
-                "",
-                "Kasaba önümde karanlık, sessiz ve son derece düşmanca uzanıyordu.",
-                "",
-                "Bir anlık dinlenebilmek için kargo kasalarından birine yaslandım. Her yerim sızlıyor, giysilerim yırtık pırtık halde, Gözlerimi kapatmak, gün boyunca uyumak ve babamın evini bulmaktan başka bir şey istemiyordum.",
-                "",
-                "Uzun bir yürüyüşten sonra eve vardım, daha evi incelemeye vaktim olmadı ancak tek diyebileceğim şey, köy halkının bana iyi bakmadığı. İnsanlar bana sanki yerin derinliklerinden, lanetli topraklardan çıkmışım gibi davranıyordu. Her neyse bugün yapılması gereken çok şey var, evi yaşama uygun bir hale getirdikten sonra bilgisayarı incelemem lazım. Yarın da babamın otopsisine baksam iyi olur."
-            ],
-            5: [
-                "Ses kaydına ulaşmak için kasadaki eski teyp cihazına dokundum.",
-                "",
-                "Aşağıdaki düğmeye basarak kayıt çalabilirsin.",
-                "",
-                "<div class=\"tape-recorder\"><button type=\"button\" class=\"tape-recorder-play\" id=\"tape-recorder-play-6\">Teyp Kaydını Çal</button></div>"
+                "=25 Ekim 1854=",
+                "Gün yeni aydınlanıyordu. Babamın ölümü üzerinde Kasaba'ya yola çıkmaya karar vermiştim, trende bir adamla karşılaştım kendisi Kasaba'nın yerellerinden biriymiş. Kendisine çok soru sormadım ama onun bana sorduğu yüzlerce soru vardı ancak sorulara cevap olarak sadece adımı söylemem yetti… Kasaba'da bu kadar bilindiğimi düşünmüyordum, adam bana babamın yaptığı mucizelerden bahsetti. Babam 1800'lerde [[chapter-4-term-1|Sarıhumma]] adında bir enfeksiyonun tedavisini bulmuş ve Kasaba'nın ismini şenlendirmiş. Yıllar boyunca [[chapter-4-term-2|Krush™]] ile beraber çalışmış… Babamın bu huyunu asla sevmiyordum, büyük şirketler sadece parayı umursarlar ve kendisi hayatı boyunca şirketlerle çalışmıştı. Eğer bu kadar önemli biri olmasaydı şirket onun da diğer herkes gibi hayatını mahvederdi. Neyse… Kasaba'ya ulaşmak üzereyim, bugün not edilecek pek bir şeyim yok. Sadece düşüncelerim ve anılarım."
             ],
             1: [
                 "Vaelen [[chapter-1-term-1|Haruspex]], evine girmeden önce vakum email kutusunu kontrol eder. İçinde bir posta bulur.",
                 "=23 Ekim 1854=",
-                "Kimden: Krush Clinic Sağlık Başkanı",
-                "Kime: Vaelen [[chapter-1-term-1|Haruspex]], Megapolis Posta sistemi",
-                "Konu başlığı: Konu başlığı bulunmamakta",
+                "from: Krush Clinic Sağlık Başkanı",
+                "to: Vaelen [[chapter-1-term-1|Haruspex]], Megapolis Posta sistemi",
+                "Subject: No subject written",
                 "Sayın Vaelen [[chapter-1-term-1|Haruspex]],",
                 "Babanızın ani vefatını size bildirmek gibi ağır bir görevi yerine getirmek amacıyla bu e-postayı yazıyoruz. Krush Clinic yönetim kurulu olarak, lütfen resmi başsağlığımızı kabul ediniz. Kendisinin titiz çalışmaları ve kurumumuza olan bağlılığı, meslektaşları tarafından her zaman büyük saygı ile görülmüştür.",
                 "Cenaze işlemleri için gerekli düzenlemeler yapılmıştır. Tören, bu hafta içinde Kasaba'da gerçekleştirilecektir. En yakın akrabası ve tek çocuğu olarak, defin işlemlerine nezaret etmeniz ve törene katılmanız beklenmektedir."
@@ -756,66 +704,8 @@
                 ? chapter.bodyParagraphs
                 : [loremIpsum.substring(0, 220)];
             return lines
-                .map((line) => {
-                    const formatted = applyInlineChapterFormatting(line);
-                    return line.trim().startsWith('<') ? formatted : `<p>${formatted}</p>`;
-                })
+                .map((line) => `<p>${applyInlineChapterFormatting(line)}</p>`)
                 .join('');
-        }
-
-        const voiceAudio = new Audio('voice.mp4');
-        voiceAudio.preload = 'auto';
-        let wasLocalPlayingBeforeVoice = false;
-        let isVoicePlaying = false;
-
-        function initTapeRecorder() {
-            const tapeButton = document.getElementById('tape-recorder-play-6');
-            if (!tapeButton) return;
-
-            const resetTapeButton = () => {
-                tapeButton.disabled = false;
-                tapeButton.textContent = 'Teyp Kaydını Çal';
-            };
-
-            const resumeLocalAudioIfNeeded = () => {
-                if (wasLocalPlayingBeforeVoice) {
-                    localPlayerAudio.play().then(() => {
-                        localPlayPauseButton.textContent = 'Duraklat';
-                    }).catch(() => {
-                        localPlayPauseButton.textContent = 'Oynat';
-                    });
-                }
-                wasLocalPlayingBeforeVoice = false;
-            };
-
-            voiceAudio.addEventListener('ended', () => {
-                isVoicePlaying = false;
-                resetTapeButton();
-                resumeLocalAudioIfNeeded();
-            });
-
-            voiceAudio.addEventListener('error', () => {
-                isVoicePlaying = false;
-                resetTapeButton();
-                resumeLocalAudioIfNeeded();
-            });
-
-            tapeButton.addEventListener('click', () => {
-                if (isVoicePlaying) return;
-                isVoicePlaying = true;
-                wasLocalPlayingBeforeVoice = !localPlayerAudio.paused && !localPlayerAudio.ended;
-                if (wasLocalPlayingBeforeVoice) {
-                    localPlayerAudio.pause();
-                }
-                tapeButton.disabled = true;
-                tapeButton.textContent = 'Ses çalınıyor...';
-                voiceAudio.currentTime = 0;
-                voiceAudio.play().catch(() => {
-                    isVoicePlaying = false;
-                    resetTapeButton();
-                    resumeLocalAudioIfNeeded();
-                });
-            });
         }
 
         function inferTrackInfoFromSrc(src) {
@@ -1012,7 +902,6 @@
 
         createPages();
         initLocalPlayer();
-        initTapeRecorder();
         initCatGif();
 
         let isDragging = false;
