@@ -557,14 +557,6 @@
             redConclave: { title: "Red Conclave", description: "Placeholder lore entry. Insert political and arcane context." }
         };
 
-        const termTemplates = [
-            { title: "Ember Court", description: "Placeholder lore entry. Define this court's role, alliances, and conflicts." },
-            { title: "Void Sigil", description: "Placeholder lore entry. Add the sigil origin and practical effects." },
-            { title: "Night Wardens", description: "Placeholder lore entry. Describe purpose, hierarchy, and legacy." },
-            { title: "Black Harbor", description: "Placeholder lore entry. Add location details and notable events." },
-            { title: "Red Conclave", description: "Placeholder lore entry. Insert political and arcane context." },
-            { title: "Ash Archive", description: "Placeholder lore entry. Add archive keepers and forbidden index details." }
-        ];
         const chapterLeadFragments = [
             "Kasaba sokakları gece boyunca sisle örtülürken",
             "Megapolis arşivlerinin paslı rafları arasında",
@@ -624,6 +616,14 @@
                 inlineImageSrc: 'casette.png',
                 inlineImageAudioSrc: 'recording.mp3',
                 inlineImageAlt: 'Kaset'
+            },
+            7: {
+                bodyParagraphs: [
+                    "*28 Ekim 1854*",
+                    "Bugün ofisime (babamın evine…) yerel fabrika işçilerinden bir kaç tanesi geldi, elleri titriyordu ve bazılarının ateşi vardı. Hepsinin ortak yönü olan tek şey metal zehirlenmesi. Ne de olsa burda kimse iş sağlık standartlarına uymuyor. Aynı zamanda babamın dosyasının cinayet olarak kayda alınması bana ilginç geldi, bu köyde tıbbi sınıf bir bıçak ile bu kadar temiz bir kesme işlemi yapabilecek tek kişi babam olduğu için bu davanın cinayet olduğunu düşünmüyorum ama aynı zamanda babamı ne öldürdü o da bilinmiyor… Yapabileceğim en iyi şey şuan babamın toksikoloji raporunu beklerken köydekilere yardım etmek",
+                    "Saat 18:29",
+                    "Babamın bilgisayarında tüm maillerini okudum. Ne diyeceğimi bilmiyorum, bahsedildiği kadarıyla babam mikrosaniyeler içerisinde hücre yenilenmesini keşfederek ölümsüzlük hakkında araştırmalar yapmış. Neden ölümününü cinayet olarak dosyaya koydular şimdi anlıyorum, kimse bana bir şey söylemedi bile…"
+                ]
             }
         };
 
@@ -631,39 +631,19 @@
             const index = pageNumber - 1;
             const lead = chapterLeadFragments[index % chapterLeadFragments.length];
             const secondLead = chapterLeadFragments[(index + 3) % chapterLeadFragments.length];
-            const primaryTemplate = termTemplates[index % termTemplates.length];
-            const secondaryTemplate = termTemplates[(index + 2) % termTemplates.length];
-            const primaryTermId = `chapter-${pageNumber}-term-1`;
-            const secondaryTermId = `chapter-${pageNumber}-term-2`;
             const overrides = chapterContentByPage[pageNumber] || {};
 
             if (pageNumber === 1) {
-                termDetails[primaryTermId] = {
+                termDetails['chapter-1-term-1'] = {
                     title: "Haruspex",
                     description: "Haruspex, antik Roma ve öncesinde kurban edilen hayvanların iç organlarını inceleyerek tanrıların iradesini yorumlayan kişilere denirdi."
                 };
-            } else {
-                termDetails[primaryTermId] = {
-                    title: `${primaryTemplate.title} ${pageNumber}`,
-                    description: `${primaryTemplate.description} (Chapter ${pageNumber})`
-                };
             }
-
-            termDetails[secondaryTermId] = {
-                title: `${secondaryTemplate.title} ${pageNumber}`,
-                description: `${secondaryTemplate.description} (Chapter ${pageNumber})`
-            };
-
-            const highlightTerms = pageNumber <= 4
-                ? []
-                : pageNumber === 5
-                    ? []
-                    : [primaryTermId, secondaryTermId];
 
             return {
                 pageNumber,
                 chapterTitle: overrides.title || `Perde ${pageNumber}`,
-                highlightTerms,
+                highlightTerms: [],
                 bodyParagraphs: overrides.bodyParagraphs || [
                     `${lead}, Vaelen Haruspex olayların görünmeyen tarafını takip eder ve sayfa ${pageNumber} boyunca yeni ipuçları toplar.`,
                     `${secondLead}, dosyalar ve tanıklıklar birbiriyle çelişse de Vaelen adım adım gerçeğe yaklaşır.`
@@ -682,8 +662,7 @@
                 author: "Vaelen Zebul"
             },
             prologue: {
-                title: "Prologue Notes",
-                highlightTerms: ["ashCodex", "nightWardens", "voidSigil"]
+                title: "Prologue Notes"
             },
             chapters: chapterItems
         };
@@ -703,15 +682,6 @@
                 chapterTitle: `Perde ${pageNumber}`,
                 highlightTerms: []
             };
-        }
-
-        function renderHighlightTerms(termIds) {
-            if (!termIds || termIds.length === 0) return "";
-            return `<div>${termIds.map((termId) => {
-                const term = termDetails[termId];
-                if (!term) return "";
-                return `<button type="button" class="highlight-term" data-term-id="${termId}">${term.title}</button>`;
-            }).join("")}</div>`;
         }
 
         function applyInlineChapterFormatting(text) {
@@ -776,7 +746,6 @@
                     <div class="content-area">
                         <h2>${bookContent.prologue.title}</h2>
                         <p>${loremIpsum.substring(0, 200)}</p>
-                        ${renderHighlightTerms(bookContent.prologue.highlightTerms)}
                     </div>
                 `;
             }
@@ -792,7 +761,6 @@
                 <div class="content-area">
                     <h2>${chapter.chapterTitle}</h2>
                     ${renderChapterBody(chapter)}
-                    ${renderHighlightTerms(chapter.highlightTerms)}
                 </div>
                 <div class="page-number ${side.pageNumber % 2 === 0 ? 'left-page-number' : 'right-page-number'}">${pageNumStr}</div>
             `;
@@ -911,6 +879,10 @@
         function playCassetteRecording() {
             if (!cassetteAudio.paused) {
                 cassetteAudio.pause();
+                if (cassetteWasPausingMusic) {
+                    localPlayerAudio.play().catch(() => {});
+                    cassetteWasPausingMusic = false;
+                }
                 return;
             }
 
