@@ -561,14 +561,50 @@
             "Şafak henüz görünmeden önce şehir uyanırken"
         ];
 
-        const chapterItems = Array.from({ length: 21 }, (_, index) => {
-            const pageNumber = index + 1;
+        const chapterContentByPage = {
+            1: {
+                bodyParagraphs: [
+                    "Vaelen [[chapter-1-term-1|Haruspex]], evine girmeden önce vakum email kutusunu kontrol eder. İçinde bir posta bulur.",
+                    "=23 Ekim 1854=",
+                    "from: Krush Clinic Sağlık Başkanı",
+                    "to: Vaelen [[chapter-1-term-1|Haruspex]], Megapolis Posta sistemi",
+                    "Subject: No subject written",
+                    "Sayın Vaelen [[chapter-1-term-1|Haruspex]],",
+                    "Babanızın ani vefatını size bildirmek gibi ağır bir görevi yerine getirmek amacıyla bu e-postayı yazıyoruz. Krush Clinic yönetim kurulu olarak, lütfen resmi başsağlığımızı kabul ediniz. Kendisinin titiz çalışmaları ve kurumumuza olan bağlılığı, meslektaşları tarafından her zaman büyük saygı ile görülmüştür.",
+                    "Cenaze işlemleri için gerekli düzenlemeler yapılmıştır. Tören, bu hafta içinde Kasaba'da gerçekleştirilecektir. En yakın akrabası ve tek çocuğu olarak, defin işlemlerine nezaret etmeniz ve törene katılmanız beklenmektedir."
+                ]
+            },
+            2: {
+                bodyParagraphs: [
+                    "Bunun sizin için büyük bir kayıp ve zor bir süreç olduğunun farkında olmakla birlikte, ne yazık ki toplumumuzun tıbbi ihtiyaçları ertelenemez durumdadır. Babanızın ani ayrılışı, kadromuzda kritik bir boşluk yaratmıştır. Patoloji Doktoru pozisyonu, Krush Clinic'in kesintisiz işleyişi için hayati bir önem taşımaktadır.",
+                    "Özgeçmişiniz ve babanızın devam eden araştırmaları ile vaka dosyalarına olan ailevi bağınız göz önüne alınarak, yönetim kurulumuz görev devrinin derhal gerçekleştirilmesine onay vermiştir. Yas sürecinin hemen ardından geçerli olmak üzere, babanızın görevlerini devralmanızı ve Baş Patoloji Doktorumuz olarak göreve başlamanızı resmi olarak talep ediyoruz.",
+                    "Kasaba'ya dönüşünüz için gerekli seyahat planlamalarını gecikmeksizin yapmanızı rica ediyoruz. Cenaze töreni başlamadan önce görev devri ile ilgili evrak işlemlerini tamamlayabilmemiz için, varışınızın hemen ardından doğrudan ofisime gelmeniz gerekmektedir."
+                ]
+            },
+            3: {
+                bodyParagraphs: [
+                    "Vaelen geriye kalan sayfaları daha görmeden anlamıştır. Onlarca sayfa dolusu cenaze töreninin ve diğer harcamaların faturası, bahsedilen cenaze işlemlerinin ödemesinin hepsi Vaelen’e bırakılmıştır ancak bu dünyada işler böyle yürütüldüğünden dolayı da hiç şaşırmamıştır. Vaelen Kasaba’dan ne kadar nefret etse de babasının uğruna gitmeye karar verir. Ancak Vaelen’in, babasının yerini doldurma gibi bir hedefi yoktur sadece cenaze için ve babasının onurlu çocuğu olmaya devam etmek için tren yoluyla Kasaba’ya yol almaya karar verir."
+                ],
+                inlineImageSrc: 'ticket.png'
+            },
+            4: {
+                title: 'Yolculuk',
+                bodyParagraphs: [
+                    "=25 Ekim 1854=",
+                    "Gün yeni aydınlanıyordu. Babamın ölümü üzerinde Kasaba'ya yola çıkmaya karar vermiştim, trende bir adamla karşılaştım kendisi Kasaba'nın yerellerinden biriymiş. Kendisine çok soru sormadım ama onun bana sorduğu yüzlerce soru vardı ancak sorulara cevap olarak sadece adımı söylemem yetti… Kasaba'da bu kadar bilindiğimi düşünmüyordum, adam bana babamın yaptığı mucizelerden bahsetti. Babam 1800'lerde [[chapter-4-term-1|Sarıhumma]] adında bir enfeksiyonun tedavisini bulmuş ve Kasaba'nın ismini şenlendirmiş. Yıllar boyunca [[chapter-4-term-2|Krush™]] ile beraber çalışmış… Babamın bu huyunu asla sevmiyordum, büyük şirketler sadece parayı umursarlar ve kendisi hayatı boyunca şirketlerle çalışmıştı. Eğer bu kadar önemli biri olmasaydı şirket onun da diğer herkes gibi hayatını mahvederdi. Neyse… Kasaba'ya ulaşmak üzereyim, bugün not edilecek pek bir şeyim yok. Sadece düşüncelerim ve anılarım."
+                ]
+            }
+        };
+
+        function createChapterItem(pageNumber) {
+            const index = pageNumber - 1;
             const lead = chapterLeadFragments[index % chapterLeadFragments.length];
             const secondLead = chapterLeadFragments[(index + 3) % chapterLeadFragments.length];
             const primaryTemplate = termTemplates[index % termTemplates.length];
             const secondaryTemplate = termTemplates[(index + 2) % termTemplates.length];
             const primaryTermId = `chapter-${pageNumber}-term-1`;
             const secondaryTermId = `chapter-${pageNumber}-term-2`;
+            const overrides = chapterContentByPage[pageNumber] || {};
 
             if (pageNumber === 1) {
                 termDetails[primaryTermId] = {
@@ -587,25 +623,23 @@
                 description: `${secondaryTemplate.description} (Chapter ${pageNumber})`
             };
 
-            const highlightTerms = (pageNumber === 1 || pageNumber === 2 || pageNumber === 3 || pageNumber === 4)
+            const highlightTerms = pageNumber <= 4
                 ? []
-                : pageNumber === 1
-                    ? [primaryTermId]
-                    : [
-                        primaryTermId,
-                        secondaryTermId
-                    ];
+                : [primaryTermId, secondaryTermId];
 
             return {
                 pageNumber,
-                chapterTitle: `Perde ${pageNumber}`,
+                chapterTitle: overrides.title || `Perde ${pageNumber}`,
                 highlightTerms,
-                bodyParagraphs: [
+                bodyParagraphs: overrides.bodyParagraphs || [
                     `${lead}, Vaelen Haruspex olayların görünmeyen tarafını takip eder ve sayfa ${pageNumber} boyunca yeni ipuçları toplar.`,
                     `${secondLead}, dosyalar ve tanıklıklar birbiriyle çelişse de Vaelen adım adım gerçeğe yaklaşır.`
-                ]
+                ],
+                inlineImageSrc: overrides.inlineImageSrc || ''
             };
-        });
+        }
+
+        const chapterItems = Array.from({ length: 21 }, (_, index) => createChapterItem(index + 1));
 
         const bookContent = {
             metadata: {
@@ -617,39 +651,6 @@
                 highlightTerms: ["ashCodex", "nightWardens", "voidSigil"]
             },
             chapters: chapterItems
-        };
-
-        const chapterTitleOverrides = {
-            4: "Yolculuk"
-        };
-
-        const chapterOverrides = {
-            4: [
-                "=25 Ekim 1854=",
-                "Gün yeni aydınlanıyordu. Babamın ölümü üzerinde Kasaba'ya yola çıkmaya karar vermiştim, trende bir adamla karşılaştım kendisi Kasaba'nın yerellerinden biriymiş. Kendisine çok soru sormadım ama onun bana sorduğu yüzlerce soru vardı ancak sorulara cevap olarak sadece adımı söylemem yetti… Kasaba'da bu kadar bilindiğimi düşünmüyordum, adam bana babamın yaptığı mucizelerden bahsetti. Babam 1800'lerde [[chapter-4-term-1|Sarıhumma]] adında bir enfeksiyonun tedavisini bulmuş ve Kasaba'nın ismini şenlendirmiş. Yıllar boyunca [[chapter-4-term-2|Krush™]] ile beraber çalışmış… Babamın bu huyunu asla sevmiyordum, büyük şirketler sadece parayı umursarlar ve kendisi hayatı boyunca şirketlerle çalışmıştı. Eğer bu kadar önemli biri olmasaydı şirket onun da diğer herkes gibi hayatını mahvederdi. Neyse… Kasaba'ya ulaşmak üzereyim, bugün not edilecek pek bir şeyim yok. Sadece düşüncelerim ve anılarım."
-            ],
-            1: [
-                "Vaelen [[chapter-1-term-1|Haruspex]], evine girmeden önce vakum email kutusunu kontrol eder. İçinde bir posta bulur.",
-                "=23 Ekim 1854=",
-                "from: Krush Clinic Sağlık Başkanı",
-                "to: Vaelen [[chapter-1-term-1|Haruspex]], Megapolis Posta sistemi",
-                "Subject: No subject written",
-                "Sayın Vaelen [[chapter-1-term-1|Haruspex]],",
-                "Babanızın ani vefatını size bildirmek gibi ağır bir görevi yerine getirmek amacıyla bu e-postayı yazıyoruz. Krush Clinic yönetim kurulu olarak, lütfen resmi başsağlığımızı kabul ediniz. Kendisinin titiz çalışmaları ve kurumumuza olan bağlılığı, meslektaşları tarafından her zaman büyük saygı ile görülmüştür.",
-                "Cenaze işlemleri için gerekli düzenlemeler yapılmıştır. Tören, bu hafta içinde Kasaba'da gerçekleştirilecektir. En yakın akrabası ve tek çocuğu olarak, defin işlemlerine nezaret etmeniz ve törene katılmanız beklenmektedir."
-            ],
-            2: [
-                "Bunun sizin için büyük bir kayıp ve zor bir süreç olduğunun farkında olmakla birlikte, ne yazık ki toplumumuzun tıbbi ihtiyaçları ertelenemez durumdadır. Babanızın ani ayrılışı, kadromuzda kritik bir boşluk yaratmıştır. Patoloji Doktoru pozisyonu, Krush Clinic'in kesintisiz işleyişi için hayati bir önem taşımaktadır.",
-                "Özgeçmişiniz ve babanızın devam eden araştırmaları ile vaka dosyalarına olan ailevi bağınız göz önüne alınarak, yönetim kurulumuz görev devrinin derhal gerçekleştirilmesine onay vermiştir. Yas sürecinin hemen ardından geçerli olmak üzere, babanızın görevlerini devralmanızı ve Baş Patoloji Doktorumuz olarak göreve başlamanızı resmi olarak talep ediyoruz.",
-                "Kasaba'ya dönüşünüz için gerekli seyahat planlamalarını gecikmeksizin yapmanızı rica ediyoruz. Cenaze töreni başlamadan önce görev devri ile ilgili evrak işlemlerini tamamlayabilmemiz için, varışınızın hemen ardından doğrudan ofisime gelmeniz gerekmektedir."
-            ],
-            3: [
-                "Vaelen geriye kalan sayfaları daha görmeden anlamıştır. Onlarca sayfa dolusu cenaze töreninin ve diğer harcamaların faturası, bahsedilen cenaze işlemlerinin ödemesinin hepsi Vaelen’e bırakılmıştır ancak bu dünyada işler böyle yürütüldüğünden dolayı da hiç şaşırmamıştır. Vaelen Kasaba’dan ne kadar nefret etse de babasının uğruna gitmeye karar verir. Ancak Vaelen’in, babasının yerini doldurma gibi bir hedefi yoktur sadece cenaze için ve babasının onurlu çocuğu olmaya devam etmek için tren yoluyla Kasaba’ya yol almaya karar verir."
-            ]
-        };
-
-        const chapterOverrideImages = {
-            3: 'ticket.png'
         };
 
         // Override term details for page 4
@@ -685,27 +686,79 @@
                 .replace(/\[\[([^|]+)\|([^\]]+)\]\]/g, '<button type="button" class="highlight-term" data-term-id="$1">$2</button>');
         }
 
-        function renderChapterBody(pageNum, chapter) {
-            const overrideLines = chapterOverrides[pageNum];
-            if (overrideLines && overrideLines.length > 0) {
-                const textHtml = overrideLines
-                    .map((line) => `<p>${applyInlineChapterFormatting(line)}</p>`)
-                    .join('');
-                const imageSrc = chapterOverrideImages[pageNum];
-                const imageHtml = imageSrc
-                    ? `<figure class="chapter-inline-image-wrap" aria-label="Ekli görsel">
-                        <span class="chapter-inline-image-pin" aria-hidden="true"></span>
-                        <img class="chapter-inline-image" src="${imageSrc}" alt="Tren bileti">
-                    </figure>`
-                    : '';
-                return `${textHtml}${imageHtml}`;
-            }
+        function renderChapterBody(chapter) {
             const lines = (chapter && chapter.bodyParagraphs && chapter.bodyParagraphs.length > 0)
                 ? chapter.bodyParagraphs
                 : [loremIpsum.substring(0, 220)];
-            return lines
+            const textHtml = lines
                 .map((line) => `<p>${applyInlineChapterFormatting(line)}</p>`)
                 .join('');
+            const imageHtml = chapter && chapter.inlineImageSrc
+                ? `<figure class="chapter-inline-image-wrap" aria-label="Ekli görsel">
+                        <span class="chapter-inline-image-pin" aria-hidden="true"></span>
+                        <img class="chapter-inline-image" src="${chapter.inlineImageSrc}" alt="Tren bileti">
+                    </figure>`
+                : '';
+            return `${textHtml}${imageHtml}`;
+        }
+
+        function createPageManifest() {
+            return Array.from({ length: TOTAL_PAGES }, (_, index) => {
+                if (index === 0) {
+                    return {
+                        front: { kind: 'cover' },
+                        back: { kind: 'prologue' }
+                    };
+                }
+
+                if (index === TOTAL_PAGES - 1) {
+                    return {
+                        front: { kind: 'chapter', pageNumber: index * 2 - 1 },
+                        back: { kind: 'cover-back' }
+                    };
+                }
+
+                return {
+                    front: { kind: 'chapter', pageNumber: index * 2 - 1 },
+                    back: { kind: 'chapter', pageNumber: index * 2 }
+                };
+            });
+        }
+
+        function renderPageSide(side) {
+            if (side.kind === 'cover') {
+                return `
+                    <div class="cover-border"></div>
+                    <h1 class="engraved-title">${bookContent.metadata.title}</h1>
+                    <div class="author-name">${bookContent.metadata.author}</div>
+                `;
+            }
+
+            if (side.kind === 'prologue') {
+                return `
+                    <div class="content-area">
+                        <h2>${bookContent.prologue.title}</h2>
+                        <p>${loremIpsum.substring(0, 200)}</p>
+                        ${renderHighlightTerms(bookContent.prologue.highlightTerms)}
+                    </div>
+                `;
+            }
+
+            if (side.kind === 'cover-back') {
+                return `<div class="cover-border"></div>`;
+            }
+
+            const chapter = getChapterByPage(side.pageNumber);
+            const pageNumStr = side.pageNumber.toString();
+
+            return `
+                <div class="content-area">
+                    <h2>${chapter.chapterTitle}</h2>
+                    ${renderChapterBody(chapter)}
+                    ${renderHighlightTerms(chapter.highlightTerms)}
+                </div>
+                <div class="page-number ${side.pageNumber % 2 === 0 ? 'left-page-number' : 'right-page-number'}">${pageNumStr}</div>
+            `;
         }
 
         function inferTrackInfoFromSrc(src) {
@@ -825,7 +878,10 @@
         }
 
         function createPages() {
-            for (let i = 0; i < TOTAL_PAGES; i++) {
+            const pageManifest = createPageManifest();
+
+            for (let i = 0; i < pageManifest.length; i++) {
+                const pageSides = pageManifest[i];
                 const pageEl = document.createElement('div');
                 pageEl.className = 'page';
                 // Set z-index so first page is on top, later pages underneath
@@ -838,60 +894,18 @@
                 backEl.className = 'page-back';
 
                 // --- CONTENT GENERATION ---
-                
-                // Front side (Right page)
-                if (i === 0) {
-                    // Page 0 Front is the Cover
+
+                if (pageSides.front.kind === 'cover') {
                     frontEl.classList.add('cover');
-                    frontEl.innerHTML = `
-                        <div class="cover-border"></div>
-                        <h1 class="engraved-title">${bookContent.metadata.title}</h1>
-                        <div class="author-name">${bookContent.metadata.author}</div>
-                    `;
-                } else {
-                    // Regular right page (Chapters 1, 3, 5... 21)
-                    const pageNum = i * 2 - 1;
-                    const chapter = getChapterByPage(pageNum);
-                    let pageNumStr = pageNum.toString();
-                    frontEl.innerHTML = `
-                        <div class="content-area">
-                            <h2>${chapterTitleOverrides[pageNum] || chapter.chapterTitle}</h2>
-                            ${renderChapterBody(pageNum, chapter)}
-                            ${renderHighlightTerms(chapter.highlightTerms)}
-                        </div>
-                        <div class="page-number right-page-number">${pageNumStr}</div>
-                    `;
                 }
 
-                // Back side (Left page after flipping)
-                if (i === TOTAL_PAGES - 1) {
-                    // Back cover
-                     backEl.classList.add('cover');
-                     backEl.style.background = '#3b2313'; // Plain dark back
-                     backEl.innerHTML = `<div class="cover-border"></div>`;
-                } else if (i === 0) {
-                    // Inside Front Cover / Prologue Notes
-                     backEl.innerHTML = `
-                        <div class="content-area">
-                            <h2>${bookContent.prologue.title}</h2>
-                            <p>${loremIpsum.substring(0, 200)}</p>
-                            ${renderHighlightTerms(bookContent.prologue.highlightTerms)}
-                        </div>
-                    `;
-                } else {
-                     // Regular left page (Chapters 2, 4, 6... 20)
-                     const pageNum = i * 2;
-                     const chapter = getChapterByPage(pageNum);
-                     let pageNumStr = pageNum.toString();
-                     backEl.innerHTML = `
-                        <div class="content-area">
-                            <h2>${chapterTitleOverrides[pageNum] || chapter.chapterTitle}</h2>
-                            ${renderChapterBody(pageNum, chapter)}
-                            ${renderHighlightTerms(chapter.highlightTerms)}
-                        </div>
-                        <div class="page-number left-page-number">${pageNumStr}</div>
-                    `;
+                if (pageSides.back.kind === 'cover-back') {
+                    backEl.classList.add('cover');
+                    backEl.style.background = '#3b2313';
                 }
+
+                frontEl.innerHTML = renderPageSide(pageSides.front);
+                backEl.innerHTML = renderPageSide(pageSides.back);
 
                 pageEl.appendChild(frontEl);
                 pageEl.appendChild(backEl);
